@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}SmartAgri Pro{% endblock %}</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg" id="mainNav">
+  <div class="container">
+    <a class="navbar-brand" href="{{ url_for('index') }}">
+      <span class="brand-leaf">🌾</span>SmartAgri<span class="accent">Pro</span>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+      <i class="fa fa-bars" style="color:var(--forest)"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navContent">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-1">
+
+        <!-- AI Tools Dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            <i class="fa fa-seedling me-1"></i>AI Tools
+          </a>
+          <ul class="dropdown-menu" style="border:1px solid var(--border-light);border-radius:var(--radius);box-shadow:var(--shadow-md)">
+            <li><a class="dropdown-item" href="{{ url_for('recommend') }}"><i class="fa fa-seedling me-2" style="color:var(--forest)"></i>Crop Recommendation</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('predict') }}"><i class="fa fa-chart-line me-2" style="color:var(--forest)"></i>Yield Prediction</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('economic') }}"><i class="fa fa-coins me-2" style="color:var(--forest)"></i>Economic Analysis</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('alerts') }}"><i class="fa fa-bell me-2" style="color:var(--forest)"></i>Smart Alerts</a></li>
+          </ul>
+        </li>
+
+        <!-- Farm Management Dropdown -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
+            <i class="fa fa-leaf me-1"></i>Farm Tools
+          </a>
+          <ul class="dropdown-menu" style="border:1px solid var(--border-light);border-radius:var(--radius);box-shadow:var(--shadow-md)">
+            
+            <li><a class="dropdown-item" href="{{ url_for('analytics') }}"><i class="fa fa-chart-bar me-2" style="color:var(--forest)"></i>Analytics</a></li>
+          </ul>
+        </li>
+
+        <!-- Equipment -->
+        <li class="nav-item"><a class="nav-link" href="{{ url_for('equipment') }}"><i class="fa fa-tractor me-1"></i>Equipment</a></li>
+
+        <!-- About -->
+        <li class="nav-item"><a class="nav-link" href="/about"><i class="fa fa-info-circle me-1"></i>About</a></li>
+
+        {% if current_user %}
+          {# Role-based links #}
+          {% if current_user.role == 'admin' %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin') }}"><i class="fa fa-shield me-1"></i>Admin</a></li>
+          {% elif current_user.role == 'provider' %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}"><i class="fa fa-gauge me-1"></i>Dashboard</a></li>
+          {% else %}
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('profile') }}"><i class="fa fa-leaf me-1"></i>Profile</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('my_bookings') }}"><i class="fa fa-calendar-check me-1"></i>Bookings</a></li>
+          {% endif %}
+
+          {# User pill — shows name, clicking opens dropdown NOT logout #}
+          <li class="nav-item dropdown">
+            <a class="nav-link nav-user-pill dropdown-toggle" href="#" id="userDropdown" role="button"
+               data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fa fa-user-circle me-1"></i>{{ current_user.name.split()[0] }}
+              <span class="badge-cat ms-1">{{ current_user.role }}</span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" style="border:1px solid var(--border-light);border-radius:var(--radius);box-shadow:var(--shadow-md);min-width:180px">
+              {% if current_user.role == 'farmer' %}
+              <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="fa fa-user me-2" style="color:var(--forest)"></i>My Profile</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('my_bookings') }}"><i class="fa fa-calendar me-2" style="color:var(--forest)"></i>My Bookings</a></li>
+              
+              {% elif current_user.role == 'provider' %}
+              <li><a class="dropdown-item" href="{{ url_for('dashboard') }}"><i class="fa fa-gauge me-2" style="color:var(--forest)"></i>Dashboard</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('add_equipment') }}"><i class="fa fa-plus me-2" style="color:var(--forest)"></i>Add Equipment</a></li>
+              {% elif current_user.role == 'admin' %}
+              <li><a class="dropdown-item" href="{{ url_for('admin') }}"><i class="fa fa-shield me-2" style="color:var(--forest)"></i>Admin Panel</a></li>
+              {% endif %}
+              <li><hr class="dropdown-divider" style="border-color:var(--border-light)"></li>
+              <li>
+                <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                  <i class="fa fa-sign-out-alt me-2"></i>Logout
+                </a>
+              </li>
+            </ul>
+          </li>
+
+        {% else %}
+          <li class="nav-item ms-1">
+            <a class="nav-link" href="{{ url_for('login') }}" style="color:var(--forest)!important;font-weight:600">
+              <i class="fa fa-sign-in-alt me-1"></i>Login
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link nav-cta" href="{{ url_for('register') }}">Get Started</a>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Flash Messages -->
+<div class="container mt-3" id="flash-container">
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+  <div class="alert alert-{{ cat }} alert-dismissible fade show shadow-sm" role="alert">
+    {{ msg }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+{% endwith %}
+</div>
+
+<main>{% block content %}{% endblock %}</main>
+
+<!-- Footer -->
+<footer class="footer mt-5">
+  <div class="container">
+    <div class="row g-4 pb-3">
+      <div class="col-lg-4">
+        <div class="footer-brand mb-2">🌾 SmartAgri Pro</div>
+        <p style="font-size:.83rem;color:rgba(255,255,255,.55);line-height:1.6">India's intelligent agriculture platform combining ML-powered crop advisory with equipment rental services for 55+ crops across 30 states.</p>
+      </div>
+      <div class="col-6 col-lg-2">
+        <p style="color:rgba(255,255,255,.7);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.8rem">Tools</p>
+        <ul class="list-unstyled" style="font-size:.82rem">
+          <li class="mb-1"><a href="{{ url_for('recommend') }}">Crop Advice</a></li>
+          <li class="mb-1"><a href="{{ url_for('predict') }}">Yield Prediction</a></li>
+          <li class="mb-1"><a href="{{ url_for('alerts') }}">Smart Alerts</a></li>
+        </ul>
+      </div>
+      <div class="col-6 col-lg-2">
+        <p style="color:rgba(255,255,255,.7);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.8rem">Platform</p>
+        <ul class="list-unstyled" style="font-size:.82rem">
+          <li class="mb-1"><a href="{{ url_for('equipment') }}">Browse Machinery</a></li>
+          <li class="mb-1"><a href="{{ url_for('analytics') }}">Analytics</a></li>
+          <li class="mb-1"><a href="/about">About</a></li>
+          {% if current_user %}
+          <li class="mb-1"><a href="{{ url_for('my_bookings') }}">My Bookings</a></li>
+          {% else %}
+          <li class="mb-1"><a href="{{ url_for('register') }}">Register</a></li>
+          {% endif %}
+        </ul>
+      </div>
+      <div class="col-lg-4">
+        <p style="color:rgba(255,255,255,.7);font-weight:600;font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.8rem">Get Started</p>
+        <p style="color:rgba(255,255,255,.55);font-size:.83rem;line-height:1.6">Free for all farmers. Create an account to save your predictions, book equipment, and track your farm performance.</p>
+        <a href="{{ url_for('register') }}" style="display:inline-flex;align-items:center;gap:.5rem;background:var(--wheat);color:var(--text);padding:.5rem 1.2rem;border-radius:8px;font-size:.83rem;font-weight:600;text-decoration:none;margin-top:.5rem">
+          <i class="fa fa-user-plus"></i> Create Free Account
+        </a>
+      </div>
+    </div>
+    <div class="footer-bottom text-center">
+      SmartAgri Pro — Powered by Random Forest ML · R² = 0.896 · 55 crops · 30 Indian states
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
