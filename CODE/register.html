@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6 col-md-8">
+      <div class="text-center mb-4">
+        <span style="font-size:3rem">🌱</span>
+        <h2 style="font-family:'Playfair Display',serif;color:var(--forest);margin:.5rem 0 .25rem">Create Account</h2>
+        <p class="text-muted-earth">Join SmartAgri Pro — free for all farmers</p>
+      </div>
+      <div class="card">
+        <div class="card-body p-4">
+          <form method="POST">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Full Name</label>
+                <input type="text" name="name" class="form-control" placeholder="Ravi Kumar" required autofocus>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Email Address</label>
+                <input type="email" name="email" class="form-control" placeholder="ravi@example.com" required>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" placeholder="Min. 6 characters" minlength="6" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Phone (optional)</label>
+                <input type="tel" name="phone" class="form-control" placeholder="9876543210">
+              </div>
+              <div class="col-6">
+                <label class="form-label">I am a</label>
+                <select name="role" class="form-select" required>
+                  <option value="farmer">🌾 Farmer</option>
+                  <option value="provider">🏭 Equipment Provider</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">State</label>
+                <select name="state" class="form-select">
+                  <option value="">Select State</option>
+                  {% for st in states %}<option value="{{ st }}">{{ st }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">District</label>
+                <input type="text" name="district" class="form-control" placeholder="Your district">
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-forest w-100 py-2">
+                  <i class="fa fa-user-plus me-2"></i>Create Account
+                </button>
+              </div>
+              <div class="col-12 text-center">
+                <p class="text-muted-earth" style="font-size:.83rem">
+                  Already have an account? <a href="{{ url_for('login') }}" class="text-forest" style="font-weight:600">Sign in</a>
+                </p>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
