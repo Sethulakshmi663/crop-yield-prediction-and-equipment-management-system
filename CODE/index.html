@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}SmartAgri Pro — Intelligent Agriculture Platform{% endblock %}
+{% block content %}
+
+<!-- ═══ ANIMATED HERO ═══ -->
+<section class="hero">
+  <div class="hero-sky"></div>
+  <div class="hero-sun"></div>
+  <div class="hero-cloud cloud1"></div>
+  <div class="hero-cloud cloud2"></div>
+  <div class="hero-cloud cloud3"></div>
+  <div class="hero-hills"></div>
+  <div class="hero-hills2"></div>
+  <div class="hero-hills3"></div>
+  <div id="heroField" class="hero-field"></div>
+
+  <div class="container hero-content">
+    <div class="row justify-content-center">
+      <div class="col-lg-8 col-xl-7">
+        <span class="hero-badge">🤖 AI-Powered Agriculture Advisory</span>
+        <h1 class="hero-title">Farm Smarter,<br>Harvest <em>Better</em></h1>
+        <p class="hero-sub">Smart farming tools for Indian farmers. Get crop recommendations, predict your harvest yield, calculate profit, and book equipment — all in one platform.</p>
+        <div class="d-flex flex-wrap gap-3 mb-4 justify-content-center">
+          <a href="{{ url_for('recommend') }}" class="btn btn-forest btn-lg px-4">
+            <i class="fa fa-seedling me-2"></i>Get Crop Advice
+          </a>
+          <a href="{{ url_for('predict') }}" class="btn px-4" style="background:rgba(255,255,255,.9);color:var(--forest);border-radius:8px;font-weight:600;padding:.65rem 1.5rem;font-size:.88rem">
+            <i class="fa fa-chart-line me-2"></i>Predict Yield
+          </a>
+        </div>
+        <div class="hero-stats-row">
+          <div class="hero-stat">
+            <span class="num" data-counter="{{ stats.crops }}">0</span>
+            <span class="lbl">Crops</span>
+          </div>
+          
+          <div class="hero-stat">
+            <span class="num" data-counter="{{ stats.r2 }}" data-float="true">0</span>
+            <span class="lbl">Yield Accuracy</span>
+          </div>
+          <div class="hero-stat">
+            <span class="num" data-counter="{{ stats.farmers }}">0</span>
+            <span class="lbl">Farmers</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURES GRID ═══ -->
+<section class="section">
+  <div class="container">
+    <div class="row align-items-end mb-5">
+      <div class="col-lg-6">
+        <span class="section-tag">What we offer</span>
+        <h2 class="section-title">Everything a Farmer <em>Needs</em></h2>
+      </div>
+      <div class="col-lg-6">
+        <p class="text-muted-earth" style="margin:0">Data-driven tools for every stage of cultivation, powered by 19,628 historical crop records from across India.</p>
+      </div>
+    </div>
+    <div class="row g-4">
+      {% set features = [
+        ("🌱","Crop Recommendation","recommend","AI-driven top-5 crop suggestions based on season, rainfall, and soil conditions."),
+        ("📊","Yield Prediction","predict","Predict your expected harvest yield and understand your risk before you plant."),
+        ("💰","Economic Analysis","economic","Calculate revenue, profit, ROI and break-even price before cultivation starts."),
+        
+        ("🚜","Equipment Rental","equipment","Browse, filter by location, and book farm machinery from registered providers."),
+      ] %}
+      {% for icon, title, route, desc in features %}
+      <div class="col-md-6 col-lg-3 fade-up">
+        <a href="{{ url_for(route) }}" class="feature-card">
+          <span class="feature-icon">{{ icon }}</span>
+          <h5>{{ title }}</h5>
+          <p>{{ desc }}</p>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section class="section section-alt">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-5">
+        <span class="section-tag">Simple process</span>
+        <h2 class="section-title">Three Steps to <em>Better Yields</em></h2>
+        <p class="text-muted-earth mt-3 mb-4">Our platform analyses 19,628 historical records to give you data-backed recommendations in seconds.</p>
+        <a href="{{ url_for('predict') }}" class="btn btn-forest px-4">
+          <i class="fa fa-play me-2"></i>Start Now
+        </a>
+      </div>
+      <div class="col-lg-7">
+        <div class="row g-3">
+          {% for step, icon, title, desc in [
+            ("01","🌍","Enter Your Details","Provide your state, month, land area, rainfall, and fertilizer usage"),
+            ("02","🤖","AI Analyses Data","Our AI model analyses thousands of crop records to find patterns"),
+            ("03","🌾","Get Actionable Results","Receive crop rankings, yield ranges, economic projections, and smart alerts"),
+          ] %}
+          <div class="col-12 fade-up">
+            <div class="d-flex gap-3 align-items-start p-3" style="background:var(--cream2);border-radius:12px;border:1px solid var(--border-light)">
+              <span style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--border);line-height:1;flex-shrink:0">{{ step }}</span>
+              <div>
+                <h6 style="color:var(--text);margin-bottom:.25rem">{{ icon }} {{ title }}</h6>
+                <p class="mb-0 text-muted-earth" style="font-size:.84rem">{{ desc }}</p>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ WHY SMARTAGRI ═══ -->
+<section class="section section-earth">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="section-tag">Why choose us</span>
+      <h2 class="section-title">Built for Indian <em>Farmers</em></h2>
+      <p class="text-muted-earth mt-2" style="max-width:520px;margin:0 auto">From small-scale farmers to large agricultural businesses — every tool is designed for simplicity and real-world results.</p>
+    </div>
+    <div class="row g-4 align-items-stretch">
+      <div class="col-md-6 col-lg-3">
+        <div class="why-card why-green">
+          <div class="why-icon">🎯</div>
+          <h6>Data-Backed Decisions</h6>
+          <p>Every recommendation is backed by thousands of real Indian crop records — not guesswork.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="why-card why-wheat">
+          <div class="why-icon">📍</div>
+          <h6>Location Aware</h6>
+          <p>All tools are calibrated to your state, season, and district — because farming conditions vary dramatically across India.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="why-card why-sky">
+          <div class="why-icon">⚡</div>
+          <h6>Instant Results</h6>
+          <p>No waiting, no complex forms. Enter your field details and get crop advice, yield ranges, and economic projections in seconds.</p>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-3">
+        <div class="why-card why-terra">
+          <div class="why-icon">🤝</div>
+          <h6>End-to-End Platform</h6>
+          <p>From equipment rental, everything is connected. One account, one platform, everything a farmer needs.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ DATA STATS STRIP ═══ -->
+<section style="background:var(--forest);padding:3.5rem 0">
+  <div class="container">
+    <div class="row g-4 align-items-center">
+      <div class="col-lg-4">
+        <h2 style="font-family:'Playfair Display',serif;color:var(--white);font-size:1.8rem;margin-bottom:.5rem">Backed by <em style="color:#FFE082">Real Data</em></h2>
+        <p style="color:rgba(255,255,255,.7);font-size:.88rem;margin:0">Trained on real Indian crop yield data spanning 30 states and 55 crops.</p>
+      </div>
+      <div class="col-lg-8">
+        <div class="row g-3 text-center">
+          {% for num, lbl in [
+            ("19,628","Records Trained"),
+            ("55","Crop Classes"),
+            ("28","Indian States"),
+            ("High","Yield Accuracy"),
+            ("Low-Med-High","Risk Range"),
+          ] %}
+          <div class="col">
+            <div style="padding:1rem;background:rgba(255,255,255,.1);border-radius:10px;border:1px solid rgba(255,255,255,.15)">
+              <div style="font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:var(--white)">{{ num }}</div>
+              <div style="font-size:.7rem;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.05em">{{ lbl }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ CTA ═══ -->
+<section class="section section-alt" style="padding:4rem 0">
+  <div class="container text-center">
+    <h2 style="font-family:'Playfair Display',serif;color:var(--text);font-size:2rem;margin-bottom:.8rem">
+      Ready to Farm <em style="color:var(--forest)">Smarter</em>?
+    </h2>
+    <p class="text-muted-earth" style="max-width:460px;margin:0 auto 1.5rem">Join farmers using AI-driven insights to make better crop, soil, and equipment decisions.</p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+      {% if not current_user %}
+      <a href="{{ url_for('register') }}" class="btn btn-forest btn-lg px-4">
+        <i class="fa fa-user-plus me-2"></i>Create Free Account
+      </a>
+      <a href="{{ url_for('login') }}" class="btn btn-forest-outline btn-lg px-4">
+        <i class="fa fa-sign-in-alt me-2"></i>Login
+      </a>
+      {% else %}
+      <a href="{{ url_for('recommend') }}" class="btn btn-forest btn-lg px-4">
+        <i class="fa fa-seedling me-2"></i>Get Crop Recommendations
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}
