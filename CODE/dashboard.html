@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Provider Dashboard{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-breadcrumb"><a href="/">Home</a> / Dashboard</div>
+    <h1>Provider <span class="accent">Dashboard</span></h1>
+    <p>Manage your equipment listings and booking requests</p>
+  </div>
+</div>
+<div class="container py-4">
+
+  <!-- Stats -->
+  <div class="row g-3 mb-4">
+    {% for icon, num, lbl, color in [
+      ("🚜", stats.total_equip, "Total Equipment", "var(--forest)"),
+      ("✅", stats.available, "Available Now", "var(--forest)"),
+      ("⏳", stats.pending, "Pending Requests", "var(--wheat)"),
+      ("📋", stats.active, "Active Bookings", "var(--sky)"),
+      ("💰", "₹"+'{:,}'.format(stats.total_revenue|int), "Total Revenue", "var(--forest)"),
+    ] %}
+    <div class="col-6 col-md-4 col-lg">
+      <div class="stat-card">
+        <span class="icon">{{ icon }}</span>
+        <span class="num" style="color:{{ color }};font-size:1.5rem">{{ num }}</span>
+        <p class="lbl">{{ lbl }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="row g-4">
+    <!-- Booking Requests -->
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="card-title">📋 Booking Requests</span>
+          <div class="d-flex gap-1">
+            <span class="badge-status badge-pending">{{ stats.pending }} Pending</span>
+            <span class="badge-status badge-approved">{{ stats.active }} Active</span>
+          </div>
+        </div>
+        <div class="card-body p-0">
+          {% if bookings %}
+          {% for b in bookings %}
+          <div class="p-3" style="border-bottom:1px solid var(--border-light)">
+            <div class="row align-items-center g-2">
+              <div class="col-md-3">
+                <strong style="font-size:.88rem">{{ b.equip_name }}</strong><br>
+                <small class="text-muted-earth">👤 {{ b.farmer_name }}</small><br>
+                {% if b.farmer_phone %}<small class="text-muted-earth">📞 {{ b.farmer_phone }}</small>{% endif %}
+              </div>
+              <div class="col-md-3">
+                <div style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em">Dates</div>
+                <div style="font-size:.85rem">{{ b.start_date }}</div>
+                <div style="font-size:.78rem;color:var(--text-muted)">→ {{ b.end_date }}</div>
+              </div>
+              <div class="col-md-2">
+                <div style="font-size:.78rem;color:var(--text-muted)">Location</div>
+                <div style="font-size:.82rem">{{ b.pickup_district or b.farmer_state or '—' }}</div>
+                {% if b.pickup_state %}<small class="text-muted-earth">{{ b.pickup_state }}</small>{% endif %}
+              </div>
+              <div class="col-md-2">
+                <div style="font-family:'Playfair Display',serif;font-weight:700;color:var(--forest);font-size:1rem">₹{{ '{:,}'.format(b.total_cost|int) }}</div>
+                <span class="badge-status badge-{{ b.status }}">{{ b.status|capitalize }}</span>
+              </div>
+              <div class="col-md-2 text-end d-flex gap-1 justify-content-end">
+                {% if b.status == 'pending' %}
+                <a href="{{ url_for('booking_action', booking_id=b.id, action='approved') }}" class="btn-success-soft btn">✓</a>
+                <a href="{{ url_for('booking_action', booking_id=b.id, action='rejected') }}" class="btn-danger-soft btn">✗</a>
+                {% endif %}
+              </div>
+            </div>
+            {% if b.notes %}
+            <div class="mt-2 p-2 rounded" style="background:var(--cream2);font-size:.79rem;color:var(--text-muted)">
+              📝 {{ b.notes }}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% else %}
+          <div class="p-5 text-center">
+            <div style="font-size:3rem;margin-bottom:.8rem">📋</div>
+            <p class="text-muted-earth">No booking requests yet.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- My Equipment -->
+    <div class="col-lg-4">
+      <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="card-title">🚜 My Equipment</span>
+          <a href="{{ url_for('add_equipment') }}" class="btn btn-forest btn-sm">+ Add</a>
+        </div>
+        <div class="card-body p-0">
+          {% if my_equip %}
+          {% for e in my_equip %}
+          <div class="p-3" style="border-bottom:1px solid var(--border-light)">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <strong style="font-size:.88rem">{{ e.name }}</strong>
+                <div class="d-flex gap-1 mt-1">
+                  <span class="equip-cat-badge">{{ e.category }}</span>
+                  <span style="font-size:.72rem;color:{% if e.is_available %}var(--forest){% else %}var(--terra){% endif %}">
+                    {{ '● Available' if e.is_available else '● Unavailable' }}
+                  </span>
+                </div>
+              </div>
+              <div class="text-end">
+                <div style="font-family:'Playfair Display',serif;font-weight:700;color:var(--forest);font-size:.95rem">₹{{ '{:,}'.format(e.daily_rate|int) }}/d</div>
+                <div class="equip-rating" style="font-size:.8rem">{% for i in range(5) %}{{ '★' if i < e.avg_rating|round|int else '☆' }}{% endfor %}</div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+          {% else %}
+          <div class="p-4 text-center">
+            <p class="text-muted-earth" style="font-size:.83rem">No equipment listed yet.</p>
+            <a href="{{ url_for('add_equipment') }}" class="btn btn-forest btn-sm">Add First Equipment</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
