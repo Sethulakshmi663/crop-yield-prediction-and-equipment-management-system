@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Yield Prediction{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-breadcrumb"><a href="/">Home</a> / Yield Prediction</div>
+    <h1>Yield <span class="accent">Prediction</span></h1>
+    <p>Enter your farm details to get an expected harvest estimate with best and worst case ranges.</p>
+  </div>
+</div>
+<div class="container py-4">
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="card">
+        <div class="card-header"><span class="card-title"><i class="fa fa-sliders me-2"></i>Input Parameters</span></div>
+        <div class="card-body">
+          <form method="POST">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Crop</label>
+                <select name="crop" class="form-select" required>
+                  <option value="">Select Crop</option>
+                  {% for c in crops %}<option value="{{ c }}" {% if form_data.get('crop')==c %}selected{% endif %}>{{ c }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Season</label>
+                <select name="season" id="seasonSelectP" class="form-select" required>
+                  <option value="">Season</option>
+                  {% for s in seasons %}<option value="{{ s }}" {% if form_data.get('season')==s %}selected{% endif %}>{{ s }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-12">
+                <div id="monthPickerP" class="p-2 rounded" style="background:var(--cream2);border:1px dashed var(--border)"></div>
+              </div>
+              <div class="col-6">
+                <label class="form-label">State</label>
+                <select name="state" class="form-select" required>
+                  <option value="">State</option>
+                  {% for st in states %}<option value="{{ st }}" {% if form_data.get('state')==st %}selected{% endif %}>{{ st }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Area (ha)</label>
+                <input type="number" name="area" class="form-control" placeholder="2.5" step="0.1" min="0.1" value="{{ form_data.get('area','') }}" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Rainfall (mm)</label>
+                <input type="number" name="rainfall" class="form-control" placeholder="1200" step="1" min="0" value="{{ form_data.get('rainfall','') }}" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Fertilizer (kg)</label>
+                <input type="number" name="fertilizer" class="form-control" placeholder="500" step="1" min="0" value="{{ form_data.get('fertilizer','') }}" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Pesticide (kg)</label>
+                <input type="number" name="pesticide" class="form-control" placeholder="10" step="0.1" min="0" value="{{ form_data.get('pesticide','0') }}">
+              </div>
+              <div class="col-12 mt-1">
+                <button type="submit" class="btn btn-forest w-100 py-2">
+                  <i class="fa fa-calculator me-2"></i>Predict Yield
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+
+    </div>
+
+    <div class="col-lg-7">
+      {% if result %}
+      <div class="result-box mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <h5 style="font-family:'Playfair Display',serif;color:var(--forest);margin:0">Harvest Forecast — <em>{{ result.crop }}</em></h5>
+          <span class="risk-badge risk-{{ result.risk|lower }}">
+            <i class="fa fa-circle-dot"></i>{{ result.risk }} Risk
+          </span>
+        </div>
+
+        <!-- Main metrics -->
+        <div class="row g-3 text-center mb-3">
+          <div class="col-4">
+            <div class="result-metric">
+              <span class="val">{{ result.yield_per_ha }}</span>
+              <span class="lbl">Per Hectare<br><small style="color:var(--text-muted)">tons expected</small></span>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="result-metric">
+              <span class="val">{{ result.area }}</span>
+              <span class="lbl">Your Farm<br><small style="color:var(--text-muted)">hectares</small></span>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="result-metric">
+              <span class="val" style="font-size:1.7rem">{{ result.total_yield }}</span>
+              <span class="lbl">Total Harvest<br><small style="color:var(--text-muted)">tons from your farm</small></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Yield Range -->
+        <div class="p-3 rounded mb-3" style="background:var(--cream2);border:1px solid var(--border-light)">
+          <p class="mb-2" style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">📦 Expected Harvest Range (your full farm)</p>
+          <div class="row g-2 text-center">
+            <div class="col-4">
+              <div style="background:#fff3f0;border-radius:8px;padding:.6rem .4rem">
+                <div style="font-size:1.15rem;font-weight:700;color:var(--terra)">{{ result.low_total }} t</div>
+                <div style="font-size:.72rem;color:var(--text-muted)">Worst Case</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div style="background:#f0f7f0;border-radius:8px;padding:.6rem .4rem;border:2px solid var(--forest)">
+                <div style="font-size:1.25rem;font-weight:700;color:var(--forest)">{{ result.total_yield }} t</div>
+                <div style="font-size:.72rem;color:var(--forest);font-weight:600">Most Likely</div>
+              </div>
+            </div>
+            <div class="col-4">
+              <div style="background:#f0f7f0;border-radius:8px;padding:.6rem .4rem">
+                <div style="font-size:1.15rem;font-weight:700;color:var(--forest)">{{ result.high_total }} t</div>
+                <div style="font-size:.72rem;color:var(--text-muted)">Best Case</div>
+              </div>
+            </div>
+          </div>
+          <p class="mt-2 mb-0" style="font-size:.78rem;color:var(--text-muted);text-align:center">
+            {% if result.risk == 'Low' %}✅ Your conditions look stable — harvest is likely to be close to the expected figure.
+            {% elif result.risk == 'Medium' %}⚠️ Some variability expected — plan for a range between worst and best case.
+            {% else %}❗ High variability — consider extra precautions like irrigation or pest management.{% endif %}
+          </p>
+        </div>
+
+        <hr class="result-divider">
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="{{ url_for('economic') }}" class="btn btn-forest btn-sm">💰 Calculate Profit</a>
+          
+        </div>
+      </div>
+
+      {% if result.alerts %}
+      <h6 style="color:var(--text-mid);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.7rem">Field Alerts</h6>
+      {% for a in result.alerts %}
+      <div class="alert-card ac-{{ a.type }}">
+        <span class="alert-icon">{{ a.icon }}</span>
+        <div><span class="alert-title">{{ a.title }}</span><span class="alert-msg">{{ a.msg }}</span></div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% else %}
+      <div class="card h-100 d-flex align-items-center justify-content-center" style="min-height:400px">
+        <div class="p-4 text-center">
+          <div style="font-size:4rem;margin-bottom:1rem">🌾</div>
+          <h5 style="font-family:'Playfair Display',serif;color:var(--forest)">Know Your Harvest Before You Plant</h5>
+          <p class="text-muted-earth mt-2" style="max-width:360px">Fill in your crop details on the left and get a clear harvest estimate — including the best case, worst case, and most likely outcome for your farm.</p>
+          <div class="p-3 mt-3 rounded" style="background:var(--cream2);border:1px dashed var(--border);text-align:left;max-width:300px;margin:1rem auto 0">
+            <p class="mb-1 text-muted-earth" style="font-size:.82rem">📌 Example result:</p>
+            <p class="mb-0 text-muted-earth" style="font-size:.82rem">Most Likely: <strong>6.4 tons</strong></p>
+            <p class="mb-0 text-muted-earth" style="font-size:.82rem">Worst Case: <strong>5.6 tons</strong></p>
+            <p class="mb-0 text-muted-earth" style="font-size:.82rem">Best Case: <strong>7.2 tons</strong></p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  buildMonthSeasonSelector("monthPickerP", "seasonSelectP");
+});
+</script>
+{% endblock %}
