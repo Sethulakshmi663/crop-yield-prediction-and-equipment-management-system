@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}Browse Equipment{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-breadcrumb"><a href="/">Home</a> / Equipment Rental</div>
+    <h1>Equipment <span class="accent">Rental</span></h1>
+    <p>Browse and book agricultural machinery from verified providers near you</p>
+  </div>
+</div>
+<div class="container py-4">
+  <!-- Filters -->
+  <div class="card mb-4">
+    <div class="card-body p-3">
+      <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label">State</label>
+          <select name="state" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">All States</option>
+            {% for st in states %}<option value="{{ st }}" {% if st==state_filter %}selected{% endif %}>{{ st }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Category</label>
+          <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="">All Categories</option>
+            {% for cat in categories %}<option value="{{ cat }}" {% if cat==category_filter %}selected{% endif %}>{{ cat }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">District</label>
+          <input type="text" name="district" class="form-control form-control-sm" placeholder="Search district…" value="{{ district_filter }}">
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-forest btn-sm flex-grow-1">🔍 Filter</button>
+          <a href="{{ url_for('equipment') }}" class="btn btn-forest-outline btn-sm px-3">✕</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if equipment %}
+  <p class="text-muted-earth mb-3" style="font-size:.83rem">{{ equipment|length }} equipment listing{{ 's' if equipment|length != 1 else '' }} found</p>
+  <div class="row g-3">
+    {% for e in equipment %}
+    <div class="col-md-6 col-lg-4">
+      <div class="equip-card">
+        <!-- Equipment Photo -->
+        {% if e.photo_url %}
+        <div style="margin:-1px -1px 14px -1px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;overflow:hidden;height:170px;background:var(--cream2)">
+          <img src="{{ e.photo_url }}" alt="{{ e.name }}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.display='none'">
+        </div>
+        {% else %}
+        <div style="margin:-1px -1px 14px -1px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;height:120px;background:var(--cream2);display:flex;align-items:center;justify-content:center;border-bottom:1px dashed var(--border-light)">
+          <span style="font-size:3.5rem">{% if e.category=='Tractor' or e.category=='Mini Tractor' %}🚜{% elif e.category=='Harvesting' %}🌾{% elif e.category=='Irrigation' %}💧{% elif e.category=='Spraying' %}🪣{% elif e.category=='Sowing' %}🌱{% else %}⚙️{% endif %}</span>
+        </div>
+        {% endif %}
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <h6 style="font-family:'Playfair Display',serif;margin-bottom:.15rem">{{ e.name }}</h6>
+            <small class="text-muted-earth">by {{ e.owner_name }}</small>
+          </div>
+          <span class="equip-cat-badge">{{ e.category }}</span>
+        </div>
+        <p class="text-muted-earth mb-3" style="font-size:.82rem;line-height:1.45">{{ e.description }}</p>
+
+        <!-- Rating -->
+        <div class="d-flex align-items-center gap-2 mb-2">
+          <span class="equip-rating">
+            {% for i in range(5) %}{{ '★' if i < e.avg_rating|round|int else '☆' }}{% endfor %}
+          </span>
+          <small class="text-muted-earth">{{ "%.1f"|format(e.avg_rating) }} ({{ e.review_count }} review{{ 's' if e.review_count != 1 else '' }})</small>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <span class="equip-price">₹{{ '{:,}'.format(e.daily_rate|int) }}<small class="text-muted-earth" style="font-size:.75rem;font-weight:400">/day</small></span>
+          <div>
+            {% if e.is_available %}
+            <span style="font-size:.78rem;color:var(--forest-mid)"><span class="equip-avail-dot dot-available"></span>Available</span>
+            {% else %}
+            <span style="font-size:.78rem;color:var(--terra)"><span class="equip-avail-dot dot-unavailable"></span>Unavailable</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex gap-1 flex-wrap mb-3">
+          <span class="badge-cat"><i class="fa fa-map-marker-alt me-1"></i>{{ e.state }}</span>
+          {% if e.district %}<span class="badge-cat">{{ e.district }}</span>{% endif %}
+        </div>
+
+        <div class="d-flex gap-2">
+          {% if e.is_available %}
+          <a href="{{ url_for('book_equipment', equip_id=e.id) }}" class="btn btn-forest btn-sm flex-grow-1">
+            <i class="fa fa-calendar-plus me-1"></i>Book Now
+          </a>
+          {% else %}
+          <button class="btn btn-sm flex-grow-1" style="background:var(--cream2);color:var(--text-muted);cursor:not-allowed" disabled>Unavailable</button>
+          {% endif %}
+          <a href="#" onclick="openCalendarModal({{ e.id }}, '{{ e.name }}')" class="btn btn-forest-outline btn-sm px-2" title="View availability">📅</a>
+          {% if e.review_count > 0 %}
+          <a href="#" onclick="openReviewsModal({{ e.id }}, '{{ e.name }}')" class="btn btn-forest-outline btn-sm px-2" title="Read reviews">💬</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card py-5 text-center">
+    <div style="font-size:3.5rem;margin-bottom:1rem">🔍</div>
+    <h5 style="font-family:'Playfair Display',serif;color:var(--forest)">No equipment found</h5>
+    <p class="text-muted-earth">Try adjusting your filters or <a href="{{ url_for('equipment') }}" class="text-forest">view all listings</a></p>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Reviews Modal -->
+<div class="modal fade" id="reviewsModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-md">
+    <div class="modal-content" style="border:1px solid var(--border-light);border-radius:var(--radius-lg)">
+      <div class="modal-header" style="background:var(--cream2);border-bottom:1px solid var(--border-light);border-radius:var(--radius-lg) var(--radius-lg) 0 0">
+        <h6 class="modal-title" id="reviewsModalTitle" style="color:var(--forest);font-size:.9rem">Reviews</h6>
+        <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3" id="reviewsModalBody" style="max-height:420px;overflow-y:auto">
+        <div class="text-center py-3 text-muted-earth">⏳ Loading reviews…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Calendar Modal -->
+<div class="modal fade" id="calModal" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content" style="border:1px solid var(--border-light);border-radius:var(--radius-lg)">
+      <div class="modal-header" style="background:var(--cream2);border-bottom:1px solid var(--border-light);border-radius:var(--radius-lg) var(--radius-lg) 0 0">
+        <h6 class="modal-title" id="calModalTitle" style="color:var(--forest);font-size:.9rem">Availability</h6>
+        <button type="button" class="btn-close btn-close-sm" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3">
+        <div id="modalCalendar"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// ── Reviews Modal ─────────────────────────────────────────────────────────────
+function openReviewsModal(id, name) {
+  document.getElementById("reviewsModalTitle").textContent = "💬 Reviews — " + name;
+  const body = document.getElementById("reviewsModalBody");
+  body.innerHTML = '<div class="text-center py-3 text-muted-earth">⏳ Loading reviews…</div>';
+  new bootstrap.Modal(document.getElementById("reviewsModal")).show();
+
+  fetch(`/api/reviews/${id}`)
+    .then(r => r.json())
+    .then(reviews => {
+      if (!reviews || reviews.length === 0) {
+        body.innerHTML = `<div class="text-center py-4 text-muted-earth">
+          <div style="font-size:2.5rem;margin-bottom:.5rem">💬</div>
+          <p style="font-size:.84rem">No reviews yet for this equipment.</p></div>`;
+        return;
+      }
+      const avgRating = reviews.reduce((s, r) => s + r.rating, 0) / reviews.length;
+      const stars = n => '★'.repeat(Math.round(n)) + '☆'.repeat(5 - Math.round(n));
+      body.innerHTML = `
+        <div class="d-flex align-items-center gap-3 p-3 mb-3 rounded" style="background:var(--cream2);border:1px solid var(--border-light)">
+          <div style="font-size:2.2rem;font-weight:700;color:var(--forest);font-family:'Playfair Display',serif">${avgRating.toFixed(1)}</div>
+          <div>
+            <div style="color:var(--wheat);font-size:1.1rem;letter-spacing:2px">${stars(avgRating)}</div>
+            <div style="font-size:.75rem;color:var(--text-muted)">${reviews.length} review${reviews.length !== 1 ? 's' : ''}</div>
+          </div>
+        </div>
+        ${reviews.map(r => `
+          <div class="p-3 mb-2 rounded" style="background:var(--white);border:1px solid var(--border-light)">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span style="font-weight:600;font-size:.84rem;color:var(--text)">👤 ${r.farmer_name || 'Farmer'}</span>
+              <span style="color:var(--wheat);font-size:.95rem">${stars(r.rating)}</span>
+            </div>
+            ${r.review ? `<p style="font-size:.82rem;color:var(--text-mid);margin:0;line-height:1.5">${r.review}</p>` : '<p style="font-size:.78rem;color:var(--text-muted);margin:0;font-style:italic">No written review.</p>'}
+            <div style="font-size:.7rem;color:var(--text-muted);margin-top:4px">${r.created_at ? r.created_at.slice(0,10) : ''}</div>
+          </div>`).join('')}`;
+    })
+    .catch(() => {
+      body.innerHTML = `<div class="text-center py-4 text-muted-earth">
+        <div style="font-size:2rem;margin-bottom:.5rem">⚠️</div>
+        <p style="font-size:.83rem">Could not load reviews. Please try again.</p></div>`;
+    });
+}
+
+// ── Calendar Modal ────────────────────────────────────────────────────────────
+function openCalendarModal(id, name) {
+  document.getElementById("calModalTitle").textContent = name + " — Availability";
+  const cont = document.getElementById("modalCalendar");
+  cont.innerHTML = '<div class="text-center py-3 text-muted-earth">⏳ Loading…</div>';
+  const modal = new bootstrap.Modal(document.getElementById("calModal"));
+  modal.show();
+  fetch(`/equipment_calendar/${id}`)
+    .then(r => r.json())
+    .then(data => renderCalendar(cont, data.booked));
+}
+</script>
+{% endblock %}
