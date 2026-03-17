@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Add Equipment{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-breadcrumb"><a href="/dashboard">Dashboard</a> / Add Equipment</div>
+    <h1>List New <span class="accent">Equipment</span></h1>
+    <p>Add your machinery to the rental marketplace</p>
+  </div>
+</div>
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card">
+        <div class="card-header"><span class="card-title">🚜 Equipment Details</span></div>
+        <div class="card-body p-4">
+          <form method="POST" enctype="multipart/form-data">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Equipment Name</label>
+                <input type="text" name="name" class="form-control" placeholder="e.g. Mahindra 575 DI Tractor (55HP)" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select" required>
+                  <option value="">Select Category</option>
+                  {% for cat in ["Tractor","Tillage","Sowing","Spraying","Harvesting","Irrigation","Mini Tractor","Other"] %}
+                  <option value="{{ cat }}">{{ cat }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Daily Rate (₹)</label>
+                <div class="input-group">
+                  <span class="input-group-text">₹</span>
+                  <input type="number" name="daily_rate" class="form-control" placeholder="e.g. 1500" step="50" min="100" required>
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-control" rows="3" placeholder="Describe the equipment's condition, model, year, attachments, capacity…" required></textarea>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Equipment Photo <span style="font-size:.75rem;color:var(--text-muted);font-weight:400">(optional — upload from your device)</span></label>
+
+                <!-- Drop Zone -->
+                <div id="dropZone" onclick="document.getElementById('photoFile').click()"
+                  style="border:2px dashed var(--border);border-radius:12px;padding:28px 16px;text-align:center;
+                         cursor:pointer;background:var(--cream2);transition:.2s;position:relative">
+                  <div id="dropZoneInner">
+                    <div style="font-size:2.4rem;margin-bottom:6px">📷</div>
+                    <div style="font-weight:600;color:var(--forest);font-size:.88rem">Click or drag & drop a photo here</div>
+                    <div style="font-size:.75rem;color:var(--text-muted);margin-top:4px">JPG, PNG, WEBP · Max 5 MB</div>
+                  </div>
+                  <input type="file" id="photoFile" name="photo" accept="image/jpeg,image/png,image/webp"
+                    style="display:none" onchange="handlePhotoSelect(this)">
+                </div>
+
+                <!-- Preview -->
+                <div id="photoPreviewBox" style="display:none;margin-top:10px;position:relative">
+                  <img id="photoPreview" src="" alt="Preview"
+                    style="width:100%;max-height:200px;object-fit:cover;border-radius:10px;border:1px solid var(--border-light)">
+                  <button type="button" onclick="clearPhoto()"
+                    style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);color:#fff;border:none;
+                           border-radius:50%;width:28px;height:28px;font-size:.85rem;cursor:pointer;line-height:1">✕</button>
+                  <div id="photoFileName" style="font-size:.75rem;color:var(--text-muted);margin-top:5px"></div>
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="form-label">State</label>
+                <select name="state" class="form-select" required>
+                  <option value="">Select State</option>
+                  {% for st in states %}<option value="{{ st }}">{{ st }}</option>{% endfor %}
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">District</label>
+                <input type="text" name="district" class="form-control" placeholder="e.g. Tumkur" required>
+              </div>
+              <div class="col-12">
+                <div class="p-3 rounded" style="background:var(--wheat-pale);border:1px solid rgba(200,151,58,.2);font-size:.81rem;color:#92400E">
+                  💡 Your equipment will appear in the marketplace after listing. Farmers can browse and request bookings which you can approve or reject from your dashboard.
+                </div>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-forest w-100 py-2">
+                  <i class="fa fa-plus me-2"></i>Add Equipment to Marketplace
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+const dropZone = document.getElementById('dropZone');
+
+// Drag & Drop events
+['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, e => {
+  e.preventDefault();
+  dropZone.style.borderColor = 'var(--forest)';
+  dropZone.style.background  = 'var(--forest-pale)';
+}));
+['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, e => {
+  e.preventDefault();
+  dropZone.style.borderColor = 'var(--border)';
+  dropZone.style.background  = 'var(--cream2)';
+}));
+dropZone.addEventListener('drop', e => {
+  const file = e.dataTransfer.files[0];
+  if (file) loadPreview(file);
+});
+
+function handlePhotoSelect(input) {
+  if (input.files && input.files[0]) loadPreview(input.files[0]);
+}
+
+function loadPreview(file) {
+  if (!file.type.startsWith('image/')) {
+    alert('Please select an image file (JPG, PNG, or WEBP).');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    alert('File is too large. Maximum size is 5 MB.');
+    return;
+  }
+  // Transfer to real input if dropped
+  const dt = new DataTransfer();
+  dt.items.add(file);
+  document.getElementById('photoFile').files = dt.files;
+
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('photoPreview').src = e.target.result;
+    document.getElementById('photoPreviewBox').style.display = 'block';
+    document.getElementById('dropZone').style.display = 'none';
+    const kb = (file.size / 1024).toFixed(0);
+    document.getElementById('photoFileName').textContent = `📎 ${file.name} (${kb} KB)`;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearPhoto() {
+  document.getElementById('photoFile').value = '';
+  document.getElementById('photoPreviewBox').style.display = 'none';
+  document.getElementById('dropZone').style.display = 'block';
+}
+</script>
+{% endblock %}
