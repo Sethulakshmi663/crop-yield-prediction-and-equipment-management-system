@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}My Bookings{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-breadcrumb"><a href="/">Home</a> / My Bookings</div>
+    <h1>My <span class="accent">Bookings</span></h1>
+    <p>Track your equipment rental requests and submitted reviews</p>
+  </div>
+</div>
+<div class="container py-4">
+  {% if bookings %}
+  <div class="row g-3">
+    {% for b in bookings %}
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body p-0">
+          <div class="row g-0">
+            <!-- Color stripe by status -->
+            <div class="col-auto" style="width:5px;background:{% if b.status=='approved' %}var(--forest){% elif b.status=='pending' %}var(--wheat){% elif b.status=='rejected' %}var(--terra){% else %}var(--border){% endif %};border-radius:12px 0 0 12px"></div>
+            <div class="col p-4">
+              <div class="row align-items-center g-3">
+                <div class="col-md-3">
+                  <h6 style="font-family:'Playfair Display',serif;margin-bottom:.2rem">{{ b.equip_name }}</h6>
+                  <div class="d-flex gap-1 align-items-center">
+                    <span class="equip-cat-badge">{{ b.category }}</span>
+                    <span class="text-muted-earth" style="font-size:.75rem">by {{ b.owner_name }}</span>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.15rem">Dates</div>
+                  <div style="font-size:.85rem;font-weight:500">{{ b.start_date }}</div>
+                  <div style="font-size:.78rem;color:var(--text-muted)">→ {{ b.end_date }}</div>
+                </div>
+                <div class="col-md-2">
+                  <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.15rem">Cost</div>
+                  <div style="font-family:'Playfair Display',serif;font-weight:700;color:var(--forest);font-size:1.05rem">₹{{ '{:,}'.format(b.total_cost|int) }}</div>
+                </div>
+                {% if b.pickup_district or b.pickup_state %}
+                <div class="col-md-2">
+                  <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);margin-bottom:.15rem">Pickup Location</div>
+                  <div style="font-size:.83rem">{{ b.pickup_district or '' }}{% if b.pickup_district and b.pickup_state %}, {% endif %}{{ b.pickup_state or '' }}</div>
+                </div>
+                {% endif %}
+                <div class="col-md-2">
+                  <span class="badge-status badge-{{ b.status }}">{{ b.status|capitalize }}</span>
+                </div>
+                <div class="col-md-1 text-end">
+                  {% if b.status == 'pending' %}
+                  <a href="{{ url_for('cancel_booking', booking_id=b.id) }}"
+                     onclick="return confirm('Cancel this booking?')"
+                     class="btn-danger-soft btn">✕ Cancel</a>
+                  {% elif b.status == 'approved' and not b.rating %}
+                  <a href="{{ url_for('rate_booking', booking_id=b.id) }}" class="btn-success-soft btn">⭐ Rate</a>
+                  {% elif b.rating %}
+                  <span class="equip-rating" style="font-size:1rem">{% for i in range(b.rating) %}★{% endfor %}</span>
+                  {% endif %}
+                </div>
+              </div>
+              {% if b.review %}
+              <div class="mt-2 p-2 rounded" style="background:var(--cream2);border:1px solid var(--border-light);font-size:.82rem;color:var(--text-mid)">
+                💬 Your review: "{{ b.review }}"
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card py-5 text-center">
+    <div style="font-size:3.5rem;margin-bottom:1rem">📅</div>
+    <h5 style="font-family:'Playfair Display',serif;color:var(--forest)">No bookings yet</h5>
+    <p class="text-muted-earth">Browse available equipment and make your first booking.</p>
+    <a href="{{ url_for('equipment') }}" class="btn btn-forest mt-2 px-4">
+      <i class="fa fa-tractor me-2"></i>Browse Equipment
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
