@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Rate Booking{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1>Rate Your <span class="accent">Experience</span></h1>
+    <p>Help other farmers by sharing your honest feedback</p>
+  </div>
+</div>
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card mb-3" style="border-top:3px solid var(--wheat)">
+        <div class="card-body p-4">
+          <div class="d-flex gap-3 align-items-center mb-4">
+            <div class="inline-icon wheat-bg" style="width:48px;height:48px;font-size:1.4rem;border-radius:12px">🚜</div>
+            <div>
+              <h6 style="margin-bottom:.15rem">{{ booking.equip_name }}</h6>
+              <small class="text-muted-earth">Provider: {{ booking.owner_name }}</small>
+            </div>
+          </div>
+
+          <form method="POST">
+            <div class="mb-4">
+              <label class="form-label">Overall Rating</label>
+              <div class="star-rating mb-1">
+                {% for i in range(5, 0, -1) %}
+                <input type="radio" name="rating" id="star{{ i }}" value="{{ i }}" {% if i==5 %}required{% endif %}>
+                <label for="star{{ i }}" title="{{ i }} star{{ 's' if i>1 else '' }}">★</label>
+                {% endfor %}
+              </div>
+              <div style="font-size:.75rem;color:var(--text-muted)">Click a star to rate (1 = Poor, 5 = Excellent)</div>
+            </div>
+            <div class="mb-4">
+              <label class="form-label">Your Review (Optional)</label>
+              <textarea name="review" class="form-control" rows="4" placeholder="Was the equipment in good condition? Was the provider helpful? Any tips for other farmers?"></textarea>
+            </div>
+            <div class="d-flex gap-3">
+              <button type="submit" class="btn btn-forest flex-grow-1 py-2">
+                <i class="fa fa-star me-2"></i>Submit Rating
+              </button>
+              <a href="{{ url_for('my_bookings') }}" class="btn btn-forest-outline px-4">Skip</a>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="p-3 rounded text-center" style="background:var(--cream2);border:1px solid var(--border-light);font-size:.81rem;color:var(--text-muted)">
+        ⚠️ Your rating helps other farmers choose the best equipment providers.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
