@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block title %}Profit Calculator{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-breadcrumb"><a href="/">Home</a> / Profit Calculator</div>
+    <h1>Profit <span class="accent">Calculator</span></h1>
+    <p>Enter your crop details and actual costs to calculate your expected profit</p>
+  </div>
+</div>
+
+<div class="container py-4">
+  <div class="row g-4 align-items-start">
+
+    <!-- ── LEFT: Form ── -->
+    <div class="col-lg-5" style="position:sticky;top:80px">
+      <form method="POST" action="{{ url_for('economic') }}">
+
+        <div class="card mb-3">
+          <div class="card-header"><span class="card-title">🌾 Step 1 — Crop & Harvest</span></div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Crop</label>
+                <select name="crop" class="form-select" required>
+                  <option value="">Select Crop</option>
+                  {% for c in crops %}
+                  <option value="{{ c }}" {% if form_data.get('crop')==c %}selected{% endif %}>{{ c }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Farm Area (ha)</label>
+                <input type="number" name="area" class="form-control" placeholder="e.g. 2.5"
+                  step="0.1" min="0.1" value="{{ form_data.get('area','') }}" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Expected Yield (t/ha)</label>
+                <input type="number" name="exp_yield" class="form-control" placeholder="e.g. 3.2"
+                  step="0.01" min="0.01" value="{{ form_data.get('exp_yield','') }}" required>
+                <div class="form-text">Use <a href="{{ url_for('predict') }}">Yield Prediction</a></div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">Selling Price (₹/quintal)</label>
+                <input type="number" name="mkt_price" class="form-control" placeholder="e.g. 6000"
+                  step="10" min="0" value="{{ form_data.get('mkt_price','') }}">
+                <div class="form-text">1 quintal = 100 kg</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-3">
+          <div class="card-header"><span class="card-title">💸 Step 2 — Your Costs (₹)</span></div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label">🌱 Seeds</label>
+                <input type="number" name="seed_cost" class="form-control" placeholder="0"
+                  step="100" min="0" value="{{ form_data.get('seed_cost','') }}">
+              </div>
+              <div class="col-6">
+                <label class="form-label">🧪 Fertilizer</label>
+                <input type="number" name="fert_cost" class="form-control" placeholder="0"
+                  step="100" min="0" value="{{ form_data.get('fert_cost','') }}">
+              </div>
+              <div class="col-6">
+                <label class="form-label">🐛 Pesticide</label>
+                <input type="number" name="pest_cost" class="form-control" placeholder="0"
+                  step="100" min="0" value="{{ form_data.get('pest_cost','') }}">
+              </div>
+              <div class="col-12">
+                <label class="form-label">👷 Labour</label>
+                <div class="row g-2">
+                  <div class="col-5">
+                    <input type="number" name="labour_days" id="ld" class="form-control"
+                      placeholder="Days" step="1" min="0" value="{{ form_data.get('labour_days','') }}">
+                    <div class="form-text">Total days</div>
+                  </div>
+                  <div class="col-2 text-center pt-2" style="color:var(--text-muted)">×</div>
+                  <div class="col-5">
+                    <input type="number" name="labour_wage" id="lw" class="form-control"
+                      placeholder="₹/day" step="10" min="0" value="{{ form_data.get('labour_wage','') }}">
+                    <div class="form-text">Wage/day</div>
+                  </div>
+                </div>
+                <div id="lp" class="form-text mt-1" style="color:var(--forest);font-weight:600"></div>
+              </div>
+              <div class="col-12">
+                <label class="form-label">🚜 Equipment Rental</label>
+                <input type="number" name="equip_cost" class="form-control" placeholder="0"
+                  step="100" min="0" value="{{ form_data.get('equip_cost','') }}">
+              </div>
+              <div class="col-12">
+                <label class="form-label">📦 Other <small class="text-muted">(irrigation, transport…)</small></label>
+                <input type="number" name="other_cost" class="form-control" placeholder="0"
+                  step="100" min="0" value="{{ form_data.get('other_cost','') }}">
+              </div>
+              <div class="col-12">
+                <div class="p-2 rounded d-flex justify-content-between align-items-center"
+                  style="background:var(--cream2);border:1px dashed var(--border)">
+                  <span style="font-size:.85rem;color:var(--text-mid)">Total Cost:</span>
+                  <span id="lt" style="font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:700;color:var(--terra)">₹0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-forest w-100 py-2">
+          <i class="fa fa-calculator me-2"></i>Calculate My Profit
+        </button>
+      </form>
+    </div>
+
+    <!-- ── RIGHT: Result ── -->
+    <div class="col-lg-7">
+
+      {% if result %}
+
+      <!-- Summary -->
+      <div class="result-box mb-3">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+          <h5 style="font-family:'Playfair Display',serif;color:var(--forest);margin:0">
+            {{ result.crop }} — Profit Summary
+          </h5>
+          {% if result.is_profitable %}
+          <span class="risk-badge risk-low">✅ Profitable</span>
+          {% else %}
+          <span class="risk-badge risk-high">❌ Loss Expected</span>
+          {% endif %}
+        </div>
+
+        <div class="row g-2 text-center mb-3">
+          <div class="col-3">
+            <div class="result-metric">
+              <span class="val" style="font-size:1.05rem;color:var(--forest)">₹{{ '{:,}'.format(result.revenue) }}</span>
+              <span class="lbl">Total Income</span>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="result-metric">
+              <span class="val" style="font-size:1.05rem;color:var(--terra)">₹{{ '{:,}'.format(result.total_cost) }}</span>
+              <span class="lbl">Total Cost</span>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="result-metric">
+              <span class="val" style="font-size:1.05rem;color:{% if result.profit>=0 %}var(--forest){% else %}var(--terra){% endif %}">
+                ₹{{ '{:,}'.format(result.profit|abs) }}
+              </span>
+              <span class="lbl">{% if result.profit>=0 %}Profit{% else %}Loss{% endif %}</span>
+            </div>
+          </div>
+          <div class="col-3">
+            <div class="result-metric">
+              <span class="val" style="font-size:1.05rem;color:{% if result.roi>=0 %}var(--forest){% else %}var(--terra){% endif %}">
+                {{ result.roi }}%
+              </span>
+              <span class="lbl">Return</span>
+            </div>
+          </div>
+        </div>
+
+        {% if result.revenue > 0 %}
+        {% set cpct = (result.total_cost / result.revenue * 100)|round(1) %}
+        {% set bpct = [cpct, 100]|min %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1" style="font-size:.78rem;color:var(--text-muted)">
+            <span>Cost ₹{{ '{:,}'.format(result.total_cost) }}</span>
+            <span>Income ₹{{ '{:,}'.format(result.revenue) }}</span>
+          </div>
+          <div class="progress" style="height:13px;border-radius:8px">
+            <div class="progress-bar" style="width:{{ bpct }}%;background:{% if result.is_profitable %}var(--forest){% else %}var(--terra){% endif %};border-radius:8px"></div>
+          </div>
+          <div style="font-size:.75rem;color:var(--text-muted);margin-top:.3rem">
+            {% if result.is_profitable %}
+              ₹{{ '{:,}'.format(result.profit) }} profit — {{ (100-cpct)|round(1) }}% of income kept.
+            {% else %}
+              Costs exceed income by ₹{{ '{:,}'.format(result.profit|abs) }}.
+            {% endif %}
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="row g-2 mb-3" style="font-size:.83rem">
+          <div class="col-6">
+            <div class="d-flex justify-content-between p-2 rounded" style="background:var(--cream2)">
+              <span class="text-muted-earth">Total Harvest</span>
+              <strong>{{ result.total_production_tons }} tons</strong>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="d-flex justify-content-between p-2 rounded" style="background:var(--cream2)">
+              <span class="text-muted-earth">Selling Price</span>
+              <strong>₹{{ '{:,}'.format(result.mkt_price|int) }}/quintal</strong>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="d-flex justify-content-between p-2 rounded" style="background:var(--cream2)">
+              <span class="text-muted-earth">Farm Area</span>
+              <strong>{{ result.area }} ha</strong>
+            </div>
+          </div>
+          
+
+        
+
+      <!-- Cost Breakdown -->
+      <div class="card mb-3">
+        <div class="card-header"><span class="card-title">📊 Where Your Money Goes</span></div>
+        <div class="card-body p-3">
+          {% for lbl, amt in [
+            ("🌱 Seeds",            result.seed_cost),
+            ("🧪 Fertilizer",       result.fert_cost),
+            ("🐛 Pesticide",        result.pest_cost),
+            ("👷 Labour",           result.labour_cost),
+            ("🚜 Equipment Rental", result.equip_cost),
+            ("📦 Other",            result.other_cost),
+          ] %}{% if amt > 0 %}
+          {% set pct = ((amt/result.total_cost)*100)|round(0)|int if result.total_cost>0 else 0 %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between mb-1" style="font-size:.83rem">
+              <span>{{ lbl }}</span>
+              <strong>₹{{ '{:,}'.format(amt) }} <span class="text-muted-earth" style="font-weight:400">({{ pct }}%)</span></strong>
+            </div>
+            <div class="progress" style="height:7px;border-radius:4px;background:#e9ecef">
+              <div class="progress-bar" style="width:{{ pct }}%;background:var(--forest);border-radius:4px"></div>
+            </div>
+          </div>
+          {% endif %}{% endfor %}
+          <hr class="my-2">
+          <div class="d-flex justify-content-between fw-bold" style="font-size:.9rem">
+            <span>Total Cost</span>
+            <span style="color:var(--terra)">₹{{ '{:,}'.format(result.total_cost) }}</span>
+          </div>
+          {% if result.labour_cost > 0 %}
+          <div class="mt-1" style="font-size:.76rem;color:var(--text-muted)">
+            
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Advice -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">💡 Advice</span></div>
+        <div class="card-body p-3" style="font-size:.83rem">
+          {% if result.is_profitable %}
+          <p class="mb-2" style="color:var(--forest)">✅ This crop is profitable at the current selling rate.</p>
+          {% else %}
+          <p class="mb-2" style="color:var(--terra)">⚠️ This crop may not be profitable. Consider:</p>
+          <ul style="padding-left:1.2rem;margin-bottom:.5rem">
+            <li>Renting machinery to reduce labour costs</li>
+            <li>Selling directly to mandis or FPOs for better prices</li>
+            <li>Choosing a higher-value crop for your area</li>
+          </ul>
+          {% endif %}
+          {% if result.biggest_amt > 0 %}
+          <p class="mb-0">📌 Biggest expense: <strong>{{ result.biggest_cost }}</strong>
+            (₹{{ '{:,}'.format(result.biggest_amt) }}) — reducing this will improve profit most.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      {% else %}
+      <!-- Empty state -->
+      <div class="card d-flex align-items-center justify-content-center" style="min-height:480px">
+        <div class="p-4 text-center">
+          <div style="font-size:4rem;margin-bottom:1rem">💰</div>
+          <h5 style="font-family:'Playfair Display',serif;color:var(--forest)">Know Your Profit Before You Plant</h5>
+          <p class="text-muted-earth mt-2" style="max-width:320px;margin:auto">
+            Fill in your crop, yield, selling price and costs on the left — then click Calculate.
+          </p>
+          <div class="p-3 mt-3 rounded" style="background:var(--cream2);border:1px dashed var(--border);text-align:left;max-width:260px;margin:1rem auto 0">
+            <p class="mb-1" style="font-size:.82rem;font-weight:600">Result shows:</p>
+            <p class="mb-0 text-muted-earth" style="font-size:.81rem">💵 Total Income vs Total Cost</p>
+            <p class="mb-0 text-muted-earth" style="font-size:.81rem">💰 Net Profit or Loss</p>
+            
+            
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+<script>
+function upd(){
+  const v = id => parseFloat(document.getElementById(id)?.value)||0;
+  const q = n  => parseFloat(document.querySelector(`[name="${n}"]`)?.value)||0;
+  const days=v('ld'), wage=v('lw');
+  document.getElementById('lp').textContent = (days&&wage)?`= ₹${(days*wage).toLocaleString('en-IN')} total labour`:'';
+  const tot = q('seed_cost')+q('fert_cost')+q('pest_cost')+q('equip_cost')+q('other_cost')+days*wage;
+  document.getElementById('lt').textContent = '₹'+Math.round(tot).toLocaleString('en-IN');
+}
+document.querySelectorAll('input[type=number]').forEach(e=>e.addEventListener('input',upd));
+upd();
+</script>
+{% endblock %}
