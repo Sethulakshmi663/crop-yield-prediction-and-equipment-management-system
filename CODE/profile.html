@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="page-breadcrumb"><a href="/">Home</a> / Profile</div>
+    <h1>Farmer <span class="accent">Profile</span></h1>
+    <p>Your agricultural activity history and performance overview</p>
+  </div>
+</div>
+<div class="container py-4">
+  <!-- Profile Header -->
+  <div class="card mb-4" style="border-top:4px solid var(--forest)">
+    <div class="card-body p-4">
+      <div class="d-flex gap-4 align-items-center flex-wrap">
+        <div class="profile-avatar">{{ user.name[0].upper() }}</div>
+        <div class="flex-grow-1">
+          <h3 style="font-family:'Playfair Display',serif;color:var(--forest);margin-bottom:.25rem">{{ user.name }}</h3>
+          <p class="text-muted-earth mb-1" style="font-size:.85rem">
+            <i class="fa fa-envelope me-1"></i>{{ user.email }}
+            {% if user.phone %} &nbsp;·&nbsp; <i class="fa fa-phone me-1"></i>{{ user.phone }}{% endif %}
+          </p>
+          {% if user.state %}
+          <p class="text-muted-earth mb-0" style="font-size:.85rem"><i class="fa fa-map-marker-alt me-1"></i>{{ user.district or '' }}{% if user.district %}, {% endif %}{{ user.state }}</p>
+          {% endif %}
+        </div>
+        <div class="text-end">
+          <span class="badge-cat" style="font-size:.78rem">🌾 {{ user.role|capitalize }}</span>
+          <p class="text-muted-earth mt-1 mb-0" style="font-size:.75rem">Member since {{ user.created_at[:10] }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="row g-3 mb-4">
+    {% for icon, num, lbl in [
+      ("📊", stats.total_preds, "Predictions Made"),
+      ("🌾", stats.total_area, "Total Area (ha)"),
+      ("🏆", stats.best_crop or "—", "Most Predicted Crop"),
+      ("💰", "₹" + '{:,}'.format(stats.rental_spend|int), "Rental Spend"),
+    ] %}
+    <div class="col-6 col-md-3">
+      <div class="profile-stat">
+        <div style="font-size:1.4rem;margin-bottom:.3rem">{{ icon }}</div>
+        <div class="ps-num">{{ num }}</div>
+        <div class="ps-lbl">{{ lbl }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="row g-4">
+    <!-- Prediction History -->
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="card-title">📊 Recent Predictions</span>
+        </div>
+        <div class="card-body p-0">
+          {% if preds %}
+          {% for p in preds %}
+          <div class="timeline-item px-4">
+            <div class="timeline-dot" style="background:{% if p.risk_level=='Low' %}var(--forest){% elif p.risk_level=='Medium' %}var(--wheat){% else %}var(--terra){% endif %}"></div>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <strong style="font-size:.88rem">{{ p.crop }}</strong>
+                  <span class="text-muted-earth" style="font-size:.78rem"> · {{ p.area }} ha · {{ p.state }}</span>
+                </div>
+                <div class="text-end">
+                  <div style="font-family:'Playfair Display',serif;font-weight:700;color:var(--forest);font-size:.95rem">{{ p.predicted_yield }} t/ha</div>
+                  {% if p.risk_level %}
+                  <span class="risk-badge risk-{{ p.risk_level|lower }}" style="font-size:.68rem;padding:.1rem .5rem">{{ p.risk_level }} Risk</span>
+                  {% endif %}
+                </div>
+              </div>
+              <div class="text-muted-earth" style="font-size:.72rem;margin-top:.15rem">{{ p.created_at[:10] }}</div>
+            </div>
+          </div>
+          {% endfor %}
+          {% else %}
+          <div class="p-4 text-center text-muted-earth">
+            <div style="font-size:2.5rem;margin-bottom:.5rem">📊</div>
+            <p class="mb-0" style="font-size:.83rem">No predictions yet. <a href="{{ url_for('predict') }}" class="text-forest">Make your first prediction</a></p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking History -->
+    <div class="col-lg-6">
+      <div class="card h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="card-title">🚜 Equipment Bookings</span>
+          <a href="{{ url_for('equipment') }}" class="btn btn-sm btn-forest-outline" style="font-size:.75rem">Browse More</a>
+        </div>
+        <div class="card-body p-0">
+          {% if bookings %}
+          {% for b in bookings[:6] %}
+          <div class="timeline-item px-4">
+            <div class="timeline-dot" style="background:{% if b.status=='approved' %}var(--forest){% elif b.status=='pending' %}var(--wheat){% else %}var(--terra){% endif %}"></div>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-start">
+                <strong style="font-size:.88rem">{{ b.equip_name }}</strong>
+                <span class="badge-status badge-{{ b.status }}" style="font-size:.68rem">{{ b.status|capitalize }}</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-muted-earth" style="font-size:.76rem">{{ b.start_date }} → {{ b.end_date }}</span>
+                <span style="font-family:'Playfair Display',serif;font-weight:700;color:var(--forest);font-size:.88rem">₹{{ '{:,}'.format(b.total_cost|int) }}</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+          {% else %}
+          <div class="p-4 text-center text-muted-earth">
+            <div style="font-size:2.5rem;margin-bottom:.5rem">🚜</div>
+            <p class="mb-0" style="font-size:.83rem">No bookings yet. <a href="{{ url_for('equipment') }}" class="text-forest">Browse equipment</a></p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
