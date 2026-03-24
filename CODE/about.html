@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}About SmartAgri Pro{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="container">
+    <div class="page-breadcrumb"><a href="/">Home</a> / About</div>
+    <h1>About <span class="accent">SmartAgri Pro</span></h1>
+    <p>India's intelligent agriculture platform — bridging data science and farming</p>
+  </div>
+</div>
+
+<div class="container py-5">
+
+  <!-- Mission -->
+  <div class="row align-items-center g-5 mb-5">
+    <div class="col-lg-6">
+      <span class="section-tag">Our mission</span>
+      <h2 class="section-title">Empowering Farmers with <em>Data</em></h2>
+      <p class="text-muted-earth mt-3" style="font-size:.95rem;line-height:1.8">
+        SmartAgri Pro brings easy, intelligent farming solutions to every Indian farmer.
+      </p>
+      <p class="text-muted-earth" style="font-size:.95rem;line-height:1.8">
+        By combining AI models trained on real crop yield records with practical tools like equipment rental, profit calculation, and yield prediction, we help farmers make smarter, more profitable decisions every season.
+      </p>
+      <div class="d-flex gap-3 mt-4 flex-wrap">
+        <div class="p-3 rounded text-center" style="background:var(--forest-pale);border:1px solid rgba(44,95,46,.15);min-width:100px">
+          <div style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--forest)">55+</div>
+          <div style="font-size:.75rem;color:var(--text-muted)">Crop varieties</div>
+        </div>
+        <div class="p-3 rounded text-center" style="background:var(--wheat-pale);border:1px solid rgba(200,151,58,.15);min-width:100px">
+          <div style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--wheat)">28</div>
+          <div style="font-size:.75rem;color:var(--text-muted)">Indian states</div>
+        </div>
+        <div class="p-3 rounded text-center" style="background:var(--sky-pale);border:1px solid rgba(58,124,168,.15);min-width:100px">
+          <div style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--sky)">89.6%</div>
+          <div style="font-size:.75rem;color:var(--text-muted)">Yield prediction accuracy</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="p-4 rounded-4" style="background:var(--cream2);border:1.5px solid var(--border-light)">
+        <div style="font-size:3.5rem;margin-bottom:1rem;text-align:center">🌾</div>
+        <blockquote style="font-family:'Playfair Display',serif;font-size:1.2rem;font-style:italic;color:var(--forest);text-align:center;margin:0 0 1rem">
+          "Data-driven farming isn't just for large corporations. Every smallholder farmer deserves access to the same quality of agricultural intelligence."
+        </blockquote>
+        <p class="text-center text-muted-earth mb-0" style="font-size:.82rem">— SmartAgri Pro Team</p>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider my-5">
+
+  <!-- Technology Stack -->
+  <div class="mb-5">
+    <div class="text-center mb-4">
+      <span class="section-tag">Under the hood</span>
+      <h2 class="section-title">The <em>Technology</em></h2>
+    </div>
+    <div class="row g-4">
+      {% for icon, title, desc, color in [
+        ("🤖","AI Crop Intelligence","Our AI models are trained on thousands of real agricultural records from across India. They  climate, and farm conditions to give you accurate crop and yield recommendations.","var(--forest)"),
+        ("📊","Yield Range","We provide a clear yield range to give you a more practical and reliable understanding of expected crop output.","var(--sky)"),
+        ("🌍","19,628 Training Records","Data spans Rice, Wheat, Maize, Sugarcane, Cotton and 50 other crops across Karnataka, Tamil Nadu, Andhra Pradesh and 24 more states — covering diverse agro-climatic zones.","var(--wheat)"),
+      ] %}
+      <div class="col-md-6">
+        <div class="card h-100" style="border-left:4px solid {{ color }}">
+          <div class="card-body p-4">
+            <div style="font-size:1.8rem;margin-bottom:.6rem">{{ icon }}</div>
+            <h6 style="color:{{ color }};margin-bottom:.5rem">{{ title }}</h6>
+            <p class="text-muted-earth mb-0" style="font-size:.84rem;line-height:1.7">{{ desc }}</p>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <hr class="divider my-5">
+
+  <!-- Features Checklist -->
+  <div class="row g-5 mb-5">
+    <div class="col-lg-6">
+      <span class="section-tag">Platform features</span>
+      <h2 class="section-title">Everything <em>Included</em></h2>
+      <div class="mt-4">
+        {% for feat in [
+          ("🌱","Crop Recommendation","AI top-5 suggestions with probability scores"),
+          ("📊","Yield Prediction","Realistic yield range"),
+          ("💰","Economic Analysis","Revenue, ROI"),
+          ("🔔","Smart Alerts","Drought, fertilizer, and pesticide"),
+          ("🚜","Equipment Rental","Browse, book, rate farm machinery"),
+          ("📅","Availability Calendar","Live booked/free date view per equipment"),
+          ("⭐","Provider Ratings","5-star reviews with auto-flagging"),
+          ("👤","Farmer Profile","History dashboard with prediction and booking log"),
+          ("🛡️","Admin Panel","User management, CSV export, flag review"),
+        ] %}
+        <div class="d-flex gap-3 py-2" style="border-bottom:1px dashed var(--border-light)">
+          <span style="font-size:1.1rem;flex-shrink:0;width:28px">{{ feat[0] }}</span>
+          <div>
+            <strong style="font-size:.88rem;color:var(--text)">{{ feat[1] }}</strong>
+            <span class="text-muted-earth" style="font-size:.82rem"> — {{ feat[2] }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <span class="section-tag">Model performance</span>
+      <h2 class="section-title">Accuracy <em>Metrics</em></h2>
+      <div class="mt-4">
+        {% for label, val, desc, pct, color in [
+          ("Yield Accuracy","High","Model trained on real Indian crop data across 28 states",89.6,"var(--forest)"),
+          ("Mean Abs Error","8.26 t/ha","Average absolute deviation from actual yield",75,"var(--wheat)"),
+          ("Training Records","19,628","Total crop-season-state data points used",100,"var(--sky)"),
+          ("Crops Covered","55 classes","Unique crop varieties in training dataset",85,"var(--terra)"),
+        ] %}
+        <div class="mb-4">
+          <div class="d-flex justify-content-between align-items-baseline mb-1">
+            <strong style="font-size:.88rem">{{ label }}</strong>
+            <span style="font-family:'Playfair Display',serif;font-weight:700;color:{{ color }};font-size:1.1rem">{{ val }}</span>
+          </div>
+          <div class="progress mb-1">
+            <div class="progress-bar" data-pct="{{ pct }}" style="width:0%;background:{{ color }}"></div>
+          </div>
+          <small class="text-muted-earth">{{ desc }}</small>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="mt-4 p-4 rounded" style="background:var(--cream2);border:1px solid var(--border-light)">
+        <p class="mb-2" style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em">Tech Stack</p>
+        <div class="d-flex gap-2 flex-wrap" style="font-size:.8rem">
+          {% for tag in ["Python 3","Flask","scikit-learn","SQLite","Bootstrap 5","Playfair Display","NumPy","Jinja2"] %}
+          <span class="badge-cat">{{ tag }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider my-5">
+
+  <!-- Season Guide -->
+  <div class="mb-5">
+    <div class="text-center mb-4">
+      <span class="section-tag">Reference guide</span>
+      <h2 class="section-title">Indian Crop <em>Seasons</em></h2>
+      <p class="text-muted-earth mt-2">Understanding the three main agricultural seasons in India</p>
+    </div>
+    <div class="row g-4">
+      {% for season, months, crops, color, desc in [
+        ("Kharif","June – October","Rice, Maize, Cotton, Sugarcane, Bajra, Jowar","var(--forest)","The monsoon season. Crops sown in June-July and harvested by September-October. Requires high rainfall — typically 600–1200mm."),
+        ("Rabi","November – March","Wheat, Gram, Mustard, Peas, Barley","var(--sky)","The winter season. Crops sown after the monsoon and harvested in spring. Irrigation is often needed as rainfall is low."),
+        ("Zaid / Summer","April – June","Watermelon, Cucumber, Bitter Gourd, Moong","var(--wheat)","Short summer season between Rabi and Kharif. Crops mature quickly — typically 60–90 days. High heat and low rainfall."),
+      ] %}
+      <div class="col-md-4">
+        <div class="card h-100" style="border-top:4px solid {{ color }}">
+          <div class="card-body p-4">
+            <h5 style="font-family:'Playfair Display',serif;color:{{ color }};margin-bottom:.25rem">{{ season }}</h5>
+            <p style="font-size:.8rem;font-weight:600;color:var(--text-muted);margin-bottom:.8rem"><i class="fa fa-calendar me-1"></i>{{ months }}</p>
+            <p class="text-muted-earth mb-3" style="font-size:.83rem;line-height:1.6">{{ desc }}</p>
+            <div>
+              <p style="font-size:.72rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem">Key Crops</p>
+              <p class="text-muted-earth mb-0" style="font-size:.82rem">{{ crops }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="text-center py-4">
+    <h3 style="font-family:'Playfair Display',serif;color:var(--forest);margin-bottom:.8rem">Start Using SmartAgri Pro</h3>
+    <p class="text-muted-earth mb-3">Free for all farmers. No technical knowledge required.</p>
+    <div class="d-flex gap-3 justify-content-center flex-wrap">
+      {% if not current_user %}
+      <a href="{{ url_for('register') }}" class="btn btn-forest px-4">
+        <i class="fa fa-user-plus me-2"></i>Create Account
+      </a>
+      <a href="{{ url_for('recommend') }}" class="btn btn-forest-outline px-4">
+        <i class="fa fa-seedling me-2"></i>Try Crop Advisor
+      </a>
+      {% else %}
+      <a href="{{ url_for('recommend') }}" class="btn btn-forest px-4">
+        <i class="fa fa-seedling me-2"></i>Crop Recommendation
+      </a>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
