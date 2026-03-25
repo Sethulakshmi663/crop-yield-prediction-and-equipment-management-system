@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Admin Panel{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <h1>🛡️ Admin <span class="accent">Panel</span></h1>
+    <p>Platform-wide management · Users · Equipment · Bookings · Analytics</p>
+  </div>
+</div>
+<div class="container py-4">
+
+  <!-- Stats Grid -->
+  <div class="row g-3 mb-4">
+    {% for item in [
+      ("", "👥", stats.total_users, "Total Users"),
+      ("wheat-top", "🌾", stats.farmers, "Farmers"),
+      ("wheat-top", "🏭", stats.providers, "Providers"),
+      ("", "🚜", stats.total_equipment, "Equipment Listed"),
+      ("", "📋", stats.total_bookings, "Total Bookings"),
+      ("", "✅", stats.approved_bookings, "Approved"),
+      ("wheat-top", "💰", stats.total_revenue|int, "Total Revenue ₹"),
+    ] %}
+    <div class="col-6 col-md-3 col-lg-2">
+      <div class="admin-stat {{ item[0] }}">
+        <div style="font-size:1.3rem;margin-bottom:.3rem">{{ item[1] }}</div>
+        <div class="as-num" style="font-size:1.2rem">{{ item[2] }}</div>
+        <div class="as-lbl">{{ item[3] }}</div>
+      </div>
+    </div>
+    {% endfor %}
+    <div class="col-6 col-md-3 col-lg-2">
+      <div class="admin-stat sky-top d-flex flex-column justify-content-between">
+        <div style="font-size:.78rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em">Export</div>
+        <a href="{{ url_for('export_csv') }}" class="btn btn-forest btn-sm mt-2">
+          <i class="fa fa-download me-1"></i>CSV
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab Navigation -->
+  <div class="d-flex gap-2 mb-3 flex-wrap">
+    {% for tab_id, icon, label in [
+      ("tab-users","👥","Users"),
+      ("tab-equipment","🚜","Equipment"),
+      ("tab-bookings","📋","Bookings"),
+    ] %}
+    <button class="btn admin-tab-btn {% if loop.first %}btn-forest active{% else %}btn-forest-outline{% endif %} btn-sm"
+            onclick="switchAdminTab('{{ tab_id }}')"
+            style="{% if loop.first %}{% else %}{% endif %}">
+      {{ icon }} {{ label }}
+    </button>
+    {% endfor %}
+  </div>
+
+  <!-- Users Tab -->
+  <div id="tab-users" class="admin-tab-content">
+    <div class="card">
+      <div class="card-header"><span class="card-title">👥 All Users ({{ users|length }})</span></div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead><tr><th>#</th><th>Name</th><th>Email</th><th>Role</th><th>State</th><th>Predictions</th><th>Joined</th><th>Action</th></tr></thead>
+          <tbody>
+            {% for u in users %}
+            <tr>
+              <td><small class="text-muted-earth">{{ u.id }}</small></td>
+              <td><strong style="font-size:.88rem">{{ u.name }}</strong></td>
+              <td><small>{{ u.email }}</small></td>
+              <td>
+                <span class="badge-cat {% if u.role=='admin' %}bg-warning{% elif u.role=='banned' %}bg-danger{% endif %}">{{ u.role }}</span>
+              </td>
+              <td><small class="text-muted-earth">{{ u.state or '—' }}</small></td>
+              <td><span style="font-family:'Playfair Display',serif;font-weight:700;color:var(--forest)">{{ u.pred_count }}</span></td>
+              <td><small class="text-muted-earth">{{ u.created_at[:10] }}</small></td>
+              <td>
+                {% if u.role != 'admin' %}
+                <a href="{{ url_for('admin_toggle_user', uid=u.id) }}"
+                   onclick="return confirm('Toggle ban status for {{ u.name }}?')"
+                   class="btn-{{ 'danger' if u.role != 'banned' else 'success' }}-soft btn"
+                   style="font-size:.75rem">
+                  {{ '🚫 Ban' if u.role != 'banned' else '✓ Unban' }}
+                </a>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Equipment Tab -->
+  <div id="tab-equipment" class="admin-tab-content" style="display:none">
+    <div class="card">
+      <div class="card-header"><span class="card-title">🚜 All Equipment ({{ all_equipment|length }})</span></div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead><tr><th>Name</th><th>Category</th><th>Owner</th><th>Rate/Day</th><th>Rating</th><th>Available</th></tr></thead>
+          <tbody>
+            {% for e in all_equipment %}
+            <tr>
+              <td><strong style="font-size:.88rem">{{ e.name }}</strong></td>
+              <td><span class="badge-cat">{{ e.category }}</span></td>
+              <td><small>{{ e.owner_name }}</small></td>
+              <td>₹{{ '{:,}'.format(e.daily_rate|int) }}</td>
+              <td>
+                <span class="equip-rating" style="font-size:.8rem">{% for i in range(5) %}{{ '★' if i < e.avg_rating|round|int else '☆' }}{% endfor %}</span>
+                <small class="text-muted-earth">{{ "%.1f"|format(e.avg_rating) }}</small>
+              </td>
+              <td>{% if e.is_available %}<span style="color:var(--forest)">✓ Yes</span>{% else %}<span style="color:var(--terra)">✗ No</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bookings Tab -->
+  <div id="tab-bookings" class="admin-tab-content" style="display:none">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="card-title">📋 Recent Bookings ({{ all_bookings|length }})</span>
+        <a href="{{ url_for('export_csv') }}" class="btn btn-forest btn-sm">
+          <i class="fa fa-download me-1"></i>Export CSV
+        </a>
+      </div>
+      <div class="table-responsive">
+        <table class="table mb-0">
+          <thead><tr><th>#</th><th>Farmer</th><th>Provider</th><th>Equipment</th><th>Dates</th><th>Cost</th><th>Status</th><th>Created</th></tr></thead>
+          <tbody>
+            {% for b in all_bookings %}
+            <tr>
+              <td><small class="text-muted-earth">{{ b.id }}</small></td>
+              <td><small>{{ b.farmer_name }}</small></td>
+              <td><small>{{ b.provider_name }}</small></td>
+              <td><small>{{ b.equip_name }}</small></td>
+              <td><small>{{ b.start_date }}<br>{{ b.end_date }}</small></td>
+              <td><strong style="color:var(--forest);font-size:.88rem">₹{{ '{:,}'.format(b.total_cost|int) }}</strong></td>
+              <td><span class="badge-status badge-{{ b.status }}">{{ b.status|capitalize }}</span></td>
+              <td><small class="text-muted-earth">{{ b.created_at[:10] }}</small></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// Keep first tab active on load
+document.querySelector(".admin-tab-btn").classList.add("active");
+function switchAdminTab(tabId) {
+  document.querySelectorAll(".admin-tab-content").forEach(t => t.style.display = "none");
+  document.querySelectorAll(".admin-tab-btn").forEach(b => {
+    b.classList.remove("btn-forest","active");
+    b.classList.add("btn-forest-outline");
+  });
+  document.getElementById(tabId).style.display = "block";
+  event.currentTarget.classList.remove("btn-forest-outline");
+  event.currentTarget.classList.add("btn-forest","active");
+}
+</script>
+{% endblock %}
