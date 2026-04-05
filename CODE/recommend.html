@@ -38,8 +38,14 @@
                 <input type="number" name="area" class="form-control" placeholder="e.g. 2.5" step="0.1" min="0.1" value="{{ form_data.get('area','') }}" required>
               </div>
               <div class="col-6">
-                <label class="form-label">Rainfall (mm/yr)</label>
-                <input type="number" name="rainfall" class="form-control" placeholder="e.g. 1200" step="1" min="0" value="{{ form_data.get('rainfall','') }}" required>
+                <label class="form-label">Rainfall (mm/yr)
+                  <span style="font-size:.7rem;color:var(--forest);font-weight:400">— auto from weather</span>
+                </label>
+                <div class="input-group">
+                  <input type="number" name="rainfall" id="rainfallInputR" class="form-control" placeholder="e.g. 1200" step="1" min="0" max="5000" value="{{ form_data.get('rainfall','') }}" required oninput="validateRainfall(this)">
+                  <button type="button" id="fetchRainBtnR" class="btn btn-outline-success" title="Auto-fetch rainfall from Open-Meteo weather API" style="border-color:var(--forest);color:var(--forest);font-size:1rem;padding:0 10px">🌧️</button>
+                </div>
+                <div id="rainfallHintR" style="font-size:.7rem;color:var(--text-muted);margin-top:3px">Click 🌧️ after selecting state to auto-fill &nbsp;•&nbsp; Valid: 0–5000 mm/yr</div>
               </div>
               <div class="col-6">
                 <label class="form-label">Fertilizer (kg)</label>
@@ -58,7 +64,7 @@
           </form>
         </div>
       </div>
-
+ 
       <div class="card mt-3">
         <div class="card-header"><span class="card-title">ℹ️ Quick Tips</span></div>
         <div class="card-body" style="font-size:.83rem">
@@ -68,7 +74,7 @@
         </div>
       </div>
     </div>
-
+ 
     <div class="col-lg-7">
       {% if result %}
       <div class="result-box mb-4">
@@ -89,7 +95,18 @@
         {% endfor %}
         <hr class="result-divider">
         <div class="d-flex gap-2 flex-wrap">
-          <a href="{{ url_for('predict') }}" class="btn btn-forest btn-sm">📊 Predict Yield</a>
+          {# ── Pass top crop + all farm inputs to Predict page ── #}
+          <a href="{{ url_for('predict',
+              crop=result.top5[0][0],
+              season=form_data.get('season',''),
+              state=form_data.get('state',''),
+              area=form_data.get('area',''),
+              rainfall=form_data.get('rainfall',''),
+              fertilizer=form_data.get('fertilizer',''),
+              pesticide=form_data.get('pesticide','0')
+            ) }}" class="btn btn-forest btn-sm">
+            📊 Predict Yield
+          </a>
           <a href="{{ url_for('economic') }}" class="btn btn-forest-outline btn-sm">💰 Analyse Economics</a>
         </div>
       </div>
@@ -102,13 +119,13 @@
       </div>
       {% endfor %}
       {% endif %}
-
+ 
       {% else %}
       <div class="card" style="height:100%">
         <div class="card-body p-4 d-flex flex-column align-items-center justify-content-center text-center" style="min-height:350px">
           <div style="font-size:4rem;margin-bottom:1rem">🌱</div>
           <h5 style="font-family:'Playfair Display',serif;color:var(--forest)">Enter Your Farm Details</h5>
-          <p class="text-muted-earth mt-2" style="max-width:340px">Fill in your soil and climate details on the left. Our AI will suggest the best crops for your conditions.</p>
+          <p class="text-muted-earth mt-2" style="max-width:340px">Fill in your farm and climate details on the left. Our AI will suggest the best crops for your conditions.</p>
           <div class="d-flex gap-2 mt-3 flex-wrap justify-content-center">
             <span class="badge-cat">55 Crops</span>
             <span class="badge-cat">28 States</span>
@@ -125,6 +142,8 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   buildMonthSeasonSelector("monthPickerBox", "seasonSelect");
+  initRainfallAutofetch('select[name="state"]', '#rainfallInputR', 'fetchRainBtnR');
 });
 </script>
 {% endblock %}
+ 
