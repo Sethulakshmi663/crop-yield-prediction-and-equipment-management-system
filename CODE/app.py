@@ -3,19 +3,19 @@ from datetime import datetime
 import numpy as np
 from flask import (Flask, render_template, request, redirect,
                    url_for, flash, session, jsonify, Response)
-
+ 
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "models")
 DB_PATH   = os.path.join(BASE_DIR, "agri.db")
-
+ 
 app = Flask(__name__)
-
-
+ 
+ 
 # ── Core utility routes ───────────────────────────────────────────────────────
 @app.route("/about")
 def about():
     return render_template("about.html")
-
+ 
 @app.route("/api/season_from_month/<int:month>")
 def season_from_month(month):
     from flask import jsonify as _j
@@ -23,9 +23,9 @@ def season_from_month(month):
         6:"Kharif",7:"Kharif",8:"Kharif",9:"Kharif",10:"Kharif",11:"Rabi",12:"Rabi"}
     return _j({"season": MONTH_TO_SEASON.get(month, "Kharif"), "month": month})
 # ─────────────────────────────────────────────────────────────────────────────
-
+ 
 app.secret_key = "agri_secret_2024_v2"
-
+ 
 def load_models():
     clf       = pickle.load(open(os.path.join(MODEL_DIR,"crop_recommender.pkl"),"rb"))
     reg       = pickle.load(open(os.path.join(MODEL_DIR,"yield_predictor.pkl"),"rb"))
@@ -36,14 +36,14 @@ def load_models():
     scaler_y  = pickle.load(open(os.path.join(MODEL_DIR,"scaler_yield.pkl"),"rb"))
     meta      = pickle.load(open(os.path.join(MODEL_DIR,"meta.pkl"),"rb"))
     return clf, reg, le_crop, le_season, le_state, scaler, scaler_y, meta
-
+ 
 clf, reg, le_crop, le_season, le_state, scaler, scaler_y, META = load_models()
-
+ 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
-
+ 
 def init_db():
     conn = get_db(); c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS users (
@@ -83,7 +83,7 @@ def init_db():
         rating INTEGER, review TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (booking_id) REFERENCES bookings(id))""")
-
+ 
     c.execute("SELECT COUNT(*) FROM users")
     if c.fetchone()[0] == 0:
         c.executemany("INSERT INTO users (name,email,password,role,state,district,phone) VALUES (?,?,?,?,?,?,?)", [
@@ -104,9 +104,9 @@ def init_db():
             (2,"Mini Tractor","Tractor","21HP compact tractor for small farms",900,"Tamil Nadu","Coimbatore",1),
         ])
     conn.commit(); conn.close()
-
+ 
 init_db()
-
+ 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def current_user():
     uid = session.get("user_id")
@@ -115,7 +115,7 @@ def current_user():
     user = conn.execute("SELECT * FROM users WHERE id=?", (uid,)).fetchone()
     conn.close()
     return user
-
+ 
 def smart_alerts(season, state, rainfall, area, fertilizer, crop=None, pesticide=0):
     alerts = []
     if rainfall < 500:
@@ -137,38 +137,38 @@ def smart_alerts(season, state, rainfall, area, fertilizer, crop=None, pesticide
     if not alerts:
         alerts.append({"type":"success","icon":"✅","title":"All Clear","msg":"Parameters look optimal for the selected season and region."})
     return alerts
-
+ 
 def yield_confidence_interval(X_input, estimators, rainfall=None, fertilizer=None, area=None):
     preds = np.array([tree.predict(X_input)[0] for tree in estimators])
     mean = np.mean(preds); std = np.std(preds)
     low = max(0, mean - 1.96*std); high = mean + 1.96*std
     cv = (std/mean*100) if mean > 0 else 0
-
+ 
     # ── Risk based purely on farming conditions ───────────────────────────────
     # RF tree-level CV is always high (60-100%+) so is NOT used for risk rating.
     # Risk is determined by how far inputs deviate from optimal agri ranges.
     risk_score = 0
-
+ 
     if rainfall is not None:
         if rainfall < 200 or rainfall > 3500:    risk_score += 3  # very severe
         elif rainfall < 400 or rainfall > 2800:  risk_score += 2  # severe
         elif rainfall < 600 or rainfall > 2200:  risk_score += 1  # moderate
-
+ 
     if fertilizer is not None and area is not None and area > 0:
         fph = fertilizer / area
         if fph < 20 or fph > 700:   risk_score += 3
         elif fph < 50 or fph > 500: risk_score += 2
         elif fph < 80 or fph > 400: risk_score += 1
-
+ 
     risk = "Low" if risk_score <= 1 else "Medium" if risk_score <= 3 else "High"
     risk_color = "#27ae60" if risk=="Low" else "#f39c12" if risk=="Medium" else "#e74c3c"
     return {"mean":round(mean,3),"low":round(low,3),"high":round(high,3),"cv":round(cv,1),"risk":risk,"risk_color":risk_color}
-
+ 
 @app.context_processor
 def inject_user():
     return dict(current_user=current_user(), crops=META["crops"],
                 seasons=META["seasons"], states=META["states"])
-
+ 
 # ── ROUTES ────────────────────────────────────────────────────────────────────
 @app.route("/")
 def index():
@@ -182,7 +182,7 @@ def index():
     }
     conn.close()
     return render_template("index.html", stats=stats)
-
+ 
 @app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -198,7 +198,7 @@ def login():
             return redirect(url_for("index"))
         flash("Invalid credentials.","danger")
     return render_template("login.html")
-
+ 
 @app.route("/register", methods=["GET","POST"])
 def register():
     if request.method == "POST":
@@ -213,11 +213,11 @@ def register():
         except: flash("Email already registered.","danger")
         finally: conn.close()
     return render_template("register.html")
-
+ 
 @app.route("/logout")
 def logout():
     session.clear(); flash("Logged out.","info"); return redirect(url_for("index"))
-
+ 
 @app.route("/recommend", methods=["GET","POST"])
 def recommend():
     result=None; form_data={}
@@ -234,43 +234,88 @@ def recommend():
             result={"top5":top5,"alerts":smart_alerts(season,state,rainfall,area,fertilizer,pesticide=pesticide)}
         except Exception as e: flash(f"Error: {e}","danger")
     return render_template("recommend.html", result=result, form_data=form_data)
-
+ 
 @app.route("/predict", methods=["GET","POST"])
 def predict():
     result=None; form_data={}
-    if request.method=="POST":
+ 
+    def _run_prediction(crop, season, state, area, rainfall, fertilizer, pesticide):
+        """Shared prediction logic for both GET (auto-run) and POST."""
+        ce=le_crop.transform([crop])[0]; se=le_season.transform([season])[0]; ste=le_state.transform([state])[0]
+        Xi=scaler_y.transform([[se,ste,ce,area,rainfall,fertilizer,pesticide]])
+        ci=yield_confidence_interval(Xi, reg.estimators_, rainfall=rainfall, fertilizer=fertilizer, area=area)
+        res={
+            "crop":crop, "area":area,
+            "yield_per_ha":ci["mean"], "total_yield":round(ci["mean"]*area,2),
+            "low":ci["low"], "high":ci["high"],
+            "low_total":round(ci["low"]*area,2), "high_total":round(ci["high"]*area,2),
+            "rainfall":rainfall, "fertilizer":fertilizer,
+            "risk":ci["risk"], "risk_color":ci["risk_color"], "cv":ci["cv"],
+            "alerts":smart_alerts(season,state,rainfall,area,fertilizer,crop,pesticide=pesticide)
+        }
+        if session.get("user_id"):
+            conn=get_db()
+            conn.execute("""INSERT INTO predictions
+                (user_id,crop,season,state,area,rainfall,fertilizer,pesticide,predicted_yield,predicted_low,predicted_high,risk_level)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (session["user_id"],crop,season,state,area,rainfall,fertilizer,pesticide,ci["mean"],ci["low"],ci["high"],ci["risk"]))
+            conn.commit(); conn.close()
+        return res
+ 
+    # ── GET: auto-run if params passed from recommend page ────────────────────
+    if request.method=="GET" and request.args.get("crop"):
         try:
-            crop=request.form["crop"]; season=request.form["season"]; state=request.form["state"]
-            area=float(request.form["area"]); rainfall=min(5000.0, max(0.0, float(request.form["rainfall"])))
-            fertilizer=float(request.form["fertilizer"]); pesticide=float(request.form.get("pesticide",0))
-            form_data=dict(crop=crop,season=season,state=state,area=area,rainfall=rainfall,fertilizer=fertilizer,pesticide=pesticide)
-            ce=le_crop.transform([crop])[0]; se=le_season.transform([season])[0]; ste=le_state.transform([state])[0]
-            Xi=scaler_y.transform([[se,ste,ce,area,rainfall,fertilizer,pesticide]])
-            ci=yield_confidence_interval(Xi, reg.estimators_, rainfall=rainfall, fertilizer=fertilizer, area=area)
-            result={"crop":crop,"area":area,
-                "yield_per_ha":ci["mean"],"total_yield":round(ci["mean"]*area,2),
-                "low":ci["low"],"high":ci["high"],"low_total":round(ci["low"]*area,2),"high_total":round(ci["high"]*area,2),
-                "risk":ci["risk"],"risk_color":ci["risk_color"],"cv":ci["cv"],
-                "alerts":smart_alerts(season,state,rainfall,area,fertilizer,crop,pesticide=pesticide)}
-            if session.get("user_id"):
-                conn=get_db()
-                conn.execute("""INSERT INTO predictions
-                    (user_id,crop,season,state,area,rainfall,fertilizer,pesticide,predicted_yield,predicted_low,predicted_high,risk_level)
-                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
-                    (session["user_id"],crop,season,state,area,rainfall,fertilizer,pesticide,ci["mean"],ci["low"],ci["high"],ci["risk"]))
-                conn.commit(); conn.close()
-        except Exception as e: flash(f"Error: {e}","danger")
+            crop       = request.args.get("crop","")
+            season     = request.args.get("season","")
+            state      = request.args.get("state","")
+            area       = float(request.args.get("area", 1))
+            rainfall   = min(5000.0, max(0.0, float(request.args.get("rainfall", 1200))))
+            fertilizer = float(request.args.get("fertilizer", 200))
+            pesticide  = float(request.args.get("pesticide", 0))
+            form_data  = dict(crop=crop, season=season, state=state, area=area,
+                              rainfall=rainfall, fertilizer=fertilizer, pesticide=pesticide)
+            result = _run_prediction(crop, season, state, area, rainfall, fertilizer, pesticide)
+        except Exception as e:
+            flash(f"Auto-predict error: {e}", "warning")
+ 
+    # ── POST: manual form submission ──────────────────────────────────────────
+    elif request.method=="POST":
+        try:
+            crop       = request.form["crop"]
+            season     = request.form["season"]
+            state      = request.form["state"]
+            area       = float(request.form["area"])
+            rainfall   = min(5000.0, max(0.0, float(request.form["rainfall"])))
+            fertilizer = float(request.form["fertilizer"])
+            pesticide  = float(request.form.get("pesticide", 0))
+            form_data  = dict(crop=crop, season=season, state=state, area=area,
+                              rainfall=rainfall, fertilizer=fertilizer, pesticide=pesticide)
+            result = _run_prediction(crop, season, state, area, rainfall, fertilizer, pesticide)
+        except Exception as e:
+            flash(f"Error: {e}", "danger")
+ 
     return render_template("predict.html", result=result, form_data=form_data)
-
+ 
 @app.route("/economic", methods=["GET","POST"])
 def economic():
     result=None; form_data={}
+
+    # ── GET: pre-fill form if params passed from predict page ─────────────────
+    if request.method=="GET" and request.args.get("crop"):
+        form_data = dict(
+            crop      = request.args.get("crop",""),
+            area      = request.args.get("area",""),
+            exp_yield = request.args.get("exp_yield",""),
+            mkt_price = "",
+        )
+        return render_template("economic.html", result=result, form_data=form_data)
+
     if request.method=="POST":
         try:
             crop      = request.form["crop"]
             area      = float(request.form["area"])
             exp_yield = float(request.form["exp_yield"])
-            mkt_price = float(request.form.get("mkt_price") or MARKET_PRICES.get(crop, 2000))
+            mkt_price = float(request.form.get("mkt_price") or 2000)
 
             raw = lambda key: request.form.get(key, "").strip()
             seed_cost   = float(raw("seed_cost"))   if raw("seed_cost")   else 0
@@ -335,7 +380,7 @@ def alerts():
                 result_alerts.append({"type":"danger","icon":"🏜️","title":"Drought Risk","msg":"Critical rainfall shortage — irrigation is mandatory for viable yield."})
         except Exception as e: flash(f"Error: {e}","danger")
     return render_template("alerts.html", alerts=result_alerts, form_data=form_data)
-
+ 
 @app.route("/equipment")
 def equipment():
     sf=request.args.get("state",""); df=request.args.get("district",""); cf=request.args.get("category","")
@@ -354,7 +399,7 @@ def equipment():
     conn.close()
     return render_template("equipment.html", equipment=equips, categories=categories,
                            state_filter=sf, district_filter=df, category_filter=cf)
-
+ 
 @app.route("/equipment_recommend", methods=["GET","POST"])
 def equipment_recommend():
     recommended=[]; form_data={}
@@ -372,7 +417,7 @@ def equipment_recommend():
             if items: recommended.append({"category":cat,"equipment_list":items})
         conn.close()
     return render_template("equipment_recommend.html", recommended=recommended, form_data=form_data)
-
+ 
 @app.route("/equipment_calendar/<int:equip_id>")
 def equipment_calendar(equip_id):
     conn=get_db()
@@ -390,7 +435,7 @@ def equipment_calendar(equip_id):
                 booked.append((start+timedelta(days=i)).strftime("%Y-%m-%d"))
         except: pass
     return jsonify({"booked":booked})
-
+ 
 @app.route("/book/<int:equip_id>", methods=["GET","POST"])
 def book_equipment(equip_id):
     user=current_user()
@@ -417,7 +462,7 @@ def book_equipment(equip_id):
         except ValueError: flash("Invalid date.","danger")
     conn.close()
     return render_template("book.html", equip=equip)
-
+ 
 @app.route("/my_bookings")
 def my_bookings():
     user=current_user()
@@ -428,14 +473,14 @@ def my_bookings():
         LEFT JOIN ratings r ON r.booking_id=b.id WHERE b.farmer_id=? ORDER BY b.created_at DESC""",(user["id"],)).fetchall()
     conn.close()
     return render_template("my_bookings.html", bookings=bookings)
-
+ 
 @app.route("/cancel_booking/<int:booking_id>")
 def cancel_booking(booking_id):
     user=current_user()
     if not user: return redirect(url_for("login"))
     conn=get_db(); conn.execute("UPDATE bookings SET status='cancelled' WHERE id=? AND farmer_id=?",(booking_id,user["id"])); conn.commit(); conn.close()
     flash("Booking cancelled.","info"); return redirect(url_for("my_bookings"))
-
+ 
 @app.route("/rate_booking/<int:booking_id>", methods=["GET","POST"])
 def rate_booking(booking_id):
     user=current_user()
@@ -456,7 +501,7 @@ def rate_booking(booking_id):
         conn.close(); return redirect(url_for("my_bookings"))
     conn.close()
     return render_template("rate_booking.html", booking=booking)
-
+ 
 @app.route("/profile")
 def profile():
     user=current_user()
@@ -472,7 +517,7 @@ def profile():
     stats={"total_preds":len(preds),"total_area":round(total_area,1),"best_crop":best_crop,"rental_spend":round(rental_spend)}
     conn.close()
     return render_template("profile.html", user=user, preds=preds, bookings=bookings, stats=stats)
-
+ 
 @app.route("/dashboard")
 def dashboard():
     user=current_user()
@@ -487,14 +532,14 @@ def dashboard():
            "total_revenue":sum(b["total_cost"] for b in bookings if b["status"]=="approved")}
     conn.close()
     return render_template("dashboard.html", my_equip=my_equip, bookings=bookings, stats=stats)
-
+ 
 @app.route("/booking_action/<int:booking_id>/<action>")
 def booking_action(booking_id, action):
     user=current_user()
     if not user: return redirect(url_for("login"))
     conn=get_db(); conn.execute("UPDATE bookings SET status=? WHERE id=?",(action,booking_id)); conn.commit(); conn.close()
     flash(f"Booking {action}.","success"); return redirect(url_for("dashboard"))
-
+ 
 @app.route("/add_equipment", methods=["GET","POST"])
 def add_equipment():
     user=current_user()
@@ -519,7 +564,7 @@ def add_equipment():
             (user["id"],request.form["name"],request.form["category"],request.form["description"],float(request.form["daily_rate"]),request.form["state"],request.form["district"],photo_url))
         conn.commit(); conn.close(); flash("Equipment added!","success"); return redirect(url_for("dashboard"))
     return render_template("add_equipment.html", states=META["states"])
-
+ 
 @app.route("/delete_equipment/<int:equip_id>", methods=["POST"])
 def delete_equipment(equip_id):
     user = current_user()
@@ -543,7 +588,7 @@ def delete_equipment(equip_id):
     conn.commit(); conn.close()
     flash("Equipment deleted successfully.", "success")
     return redirect(url_for("dashboard"))
-
+ 
 @app.route("/toggle_availability/<int:equip_id>")
 def toggle_availability(equip_id):
     user = current_user()
@@ -558,7 +603,7 @@ def toggle_availability(equip_id):
     conn.commit(); conn.close()
     flash(f"Equipment marked as {'Available' if new_val else 'Unavailable'}.", "success")
     return redirect(url_for("dashboard"))
-
+ 
 @app.route("/admin")
 def admin():
     user=current_user()
@@ -584,7 +629,7 @@ def admin():
     conn.close()
     return render_template("admin.html", users=users, all_equipment=all_equipment,
                            all_bookings=all_bookings, stats=stats)
-
+ 
 @app.route("/admin/toggle_user/<int:uid>")
 def admin_toggle_user(uid):
     user=current_user()
@@ -593,9 +638,9 @@ def admin_toggle_user(uid):
     u=conn.execute("SELECT role FROM users WHERE id=?",(uid,)).fetchone()
     new_role="banned" if u and u["role"] not in ("banned","admin") else "farmer"
     conn.execute("UPDATE users SET role=? WHERE id=?",(new_role,uid)); conn.commit(); conn.close()
-
+ 
     flash(f"User updated to {new_role}.","success"); return redirect(url_for("admin"))
-
+ 
 @app.route("/admin/export_csv")
 def export_csv():
     user=current_user()
@@ -609,11 +654,11 @@ def export_csv():
     w.writerow(["ID","Farmer","Provider","Equipment","Start","End","Cost","Status","Created"])
     for b in bookings: w.writerow([b["id"],b["farmer"],b["provider"],b["equipment"],b["start_date"],b["end_date"],b["total_cost"],b["status"],b["created_at"]])
     return Response(out.getvalue(),mimetype="text/csv",headers={"Content-Disposition":"attachment;filename=bookings_export.csv"})
-
+ 
 @app.route("/api/market_price/<crop>")
 def api_market_price(crop):
     return jsonify({"price":MARKET_PRICES.get(crop,2000),"cost_per_ha":COST_PER_HA.get(crop,30000)})
-
+ 
 @app.route("/api/reviews/<int:equip_id>")
 def api_reviews(equip_id):
     conn = get_db()
@@ -626,6 +671,43 @@ def api_reviews(equip_id):
     """, (equip_id,)).fetchall()
     conn.close()
     return jsonify([dict(r) for r in rows])
-
+ 
 if __name__=="__main__":
     app.run(debug=True, port=5000)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
