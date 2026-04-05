@@ -20,6 +20,8 @@
           <div class="card-header"><span class="card-title">🌾 Step 1 — Crop & Harvest</span></div>
           <div class="card-body">
             <div class="row g-3">
+
+              <!-- Crop — auto-selected if coming from predict -->
               <div class="col-12">
                 <label class="form-label">Crop</label>
                 <select name="crop" class="form-select" required>
@@ -28,24 +30,38 @@
                   <option value="{{ c }}" {% if form_data.get('crop')==c %}selected{% endif %}>{{ c }}</option>
                   {% endfor %}
                 </select>
+                {% if form_data.get('crop') %}
+                <div class="form-text" style="color:var(--forest)">✅ Auto-filled from Yield Prediction</div>
+                {% endif %}
               </div>
+
+              <!-- Area — auto-filled if coming from predict -->
               <div class="col-6">
                 <label class="form-label">Farm Area (ha)</label>
                 <input type="number" name="area" class="form-control" placeholder="e.g. 2.5"
                   step="0.1" min="0.1" value="{{ form_data.get('area','') }}" required>
               </div>
+
+              <!-- Expected Yield — auto-filled from predict result -->
               <div class="col-6">
                 <label class="form-label">Expected Yield (t/ha)</label>
                 <input type="number" name="exp_yield" class="form-control" placeholder="e.g. 3.2"
                   step="0.01" min="0.01" value="{{ form_data.get('exp_yield','') }}" required>
+                {% if form_data.get('exp_yield') %}
+                <div class="form-text" style="color:var(--forest)">✅ Auto-filled from Yield Prediction</div>
+                {% else %}
                 <div class="form-text">Use <a href="{{ url_for('predict') }}">Yield Prediction</a></div>
+                {% endif %}
               </div>
+
+              <!-- Market Price -->
               <div class="col-12">
                 <label class="form-label">Selling Price (₹/quintal)</label>
                 <input type="number" name="mkt_price" class="form-control" placeholder="e.g. 6000"
                   step="10" min="0" value="{{ form_data.get('mkt_price','') }}">
                 <div class="form-text">1 quintal = 100 kg</div>
               </div>
+
             </div>
           </div>
         </div>
@@ -131,6 +147,7 @@
           {% endif %}
         </div>
 
+        <!-- 4 key numbers -->
         <div class="row g-2 text-center mb-3">
           <div class="col-3">
             <div class="result-metric">
@@ -162,6 +179,7 @@
           </div>
         </div>
 
+        <!-- Progress bar: cost vs income -->
         {% if result.revenue > 0 %}
         {% set cpct = (result.total_cost / result.revenue * 100)|round(1) %}
         {% set bpct = [cpct, 100]|min %}
@@ -183,6 +201,7 @@
         </div>
         {% endif %}
 
+        <!-- Summary stats row -->
         <div class="row g-2 mb-3" style="font-size:.83rem">
           <div class="col-6">
             <div class="d-flex justify-content-between p-2 rounded" style="background:var(--cream2)">
@@ -202,9 +221,14 @@
               <strong>{{ result.area }} ha</strong>
             </div>
           </div>
-          
-
-        
+          <div class="col-6">
+            <div class="d-flex justify-content-between p-2 rounded" style="background:var(--cream2)">
+              <span class="text-muted-earth">Break-even Price</span>
+              <strong>₹{{ '{:,}'.format(result.break_even_price) }}/quintal</strong>
+            </div>
+          </div>
+        </div>
+      </div>{# end result-box #}
 
       <!-- Cost Breakdown -->
       <div class="card mb-3">
@@ -234,11 +258,6 @@
             <span>Total Cost</span>
             <span style="color:var(--terra)">₹{{ '{:,}'.format(result.total_cost) }}</span>
           </div>
-          {% if result.labour_cost > 0 %}
-          <div class="mt-1" style="font-size:.76rem;color:var(--text-muted)">
-            
-          </div>
-          {% endif %}
         </div>
       </div>
 
@@ -276,8 +295,7 @@
             <p class="mb-1" style="font-size:.82rem;font-weight:600">Result shows:</p>
             <p class="mb-0 text-muted-earth" style="font-size:.81rem">💵 Total Income vs Total Cost</p>
             <p class="mb-0 text-muted-earth" style="font-size:.81rem">💰 Net Profit or Loss</p>
-            
-            
+            <p class="mb-0 text-muted-earth" style="font-size:.81rem">📊 Cost breakdown by category</p>
           </div>
         </div>
       </div>
