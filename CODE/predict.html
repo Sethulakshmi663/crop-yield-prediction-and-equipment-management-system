@@ -45,8 +45,14 @@
                 <input type="number" name="area" class="form-control" placeholder="2.5" step="0.1" min="0.1" value="{{ form_data.get('area','') }}" required>
               </div>
               <div class="col-6">
-                <label class="form-label">Rainfall (mm)</label>
-                <input type="number" name="rainfall" class="form-control" placeholder="1200" step="1" min="0" value="{{ form_data.get('rainfall','') }}" required>
+                <label class="form-label">Rainfall (mm/yr)
+                  <span style="font-size:.7rem;color:var(--forest);font-weight:400">— auto from weather</span>
+                </label>
+                <div class="input-group">
+                  <input type="number" name="rainfall" id="rainfallInputP" class="form-control" placeholder="1200" step="1" min="0" max="5000" value="{{ form_data.get('rainfall','') }}" required oninput="validateRainfall(this)">
+                  <button type="button" id="fetchRainBtnP" class="btn btn-outline-success" title="Auto-fetch rainfall from Open-Meteo weather API" style="border-color:var(--forest);color:var(--forest);font-size:1rem;padding:0 10px">🌧️</button>
+                </div>
+                <div id="rainfallHintP" style="font-size:.7rem;color:var(--text-muted);margin-top:3px">Click 🌧️ after selecting state to auto-fill &nbsp;•&nbsp; Valid: 0–5000 mm/yr</div>
               </div>
               <div class="col-6">
                 <label class="form-label">Fertilizer (kg)</label>
@@ -65,8 +71,6 @@
           </form>
         </div>
       </div>
-
-
     </div>
 
     <div class="col-lg-7">
@@ -74,8 +78,8 @@
       <div class="result-box mb-4">
         <div class="d-flex justify-content-between align-items-start mb-3">
           <h5 style="font-family:'Playfair Display',serif;color:var(--forest);margin:0">Harvest Forecast — <em>{{ result.crop }}</em></h5>
-          <span class="risk-badge risk-{{ result.risk|lower }}">
-            <i class="fa fa-circle-dot"></i>{{ result.risk }} Risk
+          <span class="risk-badge" id="riskBadge">
+            <i class="fa fa-circle-dot"></i><span id="riskLabel">{{ result.risk }}</span> Risk
           </span>
         </div>
 
@@ -124,17 +128,23 @@
               </div>
             </div>
           </div>
-          <p class="mt-2 mb-0" style="font-size:.78rem;color:var(--text-muted);text-align:center">
-            {% if result.risk == 'Low' %}✅ Your conditions look stable — harvest is likely to be close to the expected figure.
-            {% elif result.risk == 'Medium' %}⚠️ Some variability expected — plan for a range between worst and best case.
-            {% else %}❗ High variability — consider extra precautions like irrigation or pest management.{% endif %}
+          <p class="mt-2 mb-0" style="font-size:.78rem;color:var(--text-muted);text-align:center" id="riskHint">
+            ⏳ Calculating risk…
           </p>
         </div>
 
         <hr class="result-divider">
         <div class="d-flex gap-2 flex-wrap">
-          <a href="{{ url_for('economic') }}" class="btn btn-forest btn-sm">💰 Calculate Profit</a>
-          
+          {# ── Pass crop + yield + area to Economic page ── #}
+          <a href="{{ url_for('economic',
+              crop=result.crop,
+              area=result.area,
+              exp_yield=result.yield_per_ha,
+              rainfall=form_data.get('rainfall',''),
+              fertilizer=form_data.get('fertilizer','')
+            ) }}" class="btn btn-forest btn-sm">
+            💰 Calculate Profit
+          </a>
         </div>
       </div>
 
@@ -171,6 +181,39 @@
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   buildMonthSeasonSelector("monthPickerP", "seasonSelectP");
+  initRainfallAutofetch('select[name="state"]', '#rainfallInputP', 'fetchRainBtnP');
+
+  const badge  = document.getElementById('riskBadge');
+  const label  = document.getElementById('riskLabel');
+  const hint   = document.getElementById('riskHint');
+  if (badge && label) {
+    const rainfall   = parseFloat("{{ result.get('rainfall', form_data.get('rainfall', 1200)) if result else form_data.get('rainfall', 1200) }}") || 1200;
+    const fertilizer = parseFloat("{{ result.get('fertilizer', form_data.get('fertilizer', 200)) if result else form_data.get('fertilizer', 200) }}") || 200;
+    const area       = parseFloat("{{ result.area | default(1) }}") || 1;
+
+    let riskScore = 0;
+    if (rainfall < 200 || rainfall > 3500)       riskScore += 3;
+    else if (rainfall < 400 || rainfall > 2800)  riskScore += 2;
+    else if (rainfall < 600 || rainfall > 2200)  riskScore += 1;
+
+    const fph = fertilizer / area;
+    if (fph < 20 || fph > 700)        riskScore += 3;
+    else if (fph < 50 || fph > 500)   riskScore += 2;
+    else if (fph < 80 || fph > 400)   riskScore += 1;
+
+    const risk = riskScore <= 1 ? 'Low' : riskScore <= 3 ? 'Medium' : 'High';
+    label.textContent = risk;
+    badge.className = 'risk-badge risk-' + risk.toLowerCase();
+
+    if (hint) {
+      const msgs = {
+        Low:    '✅ Your conditions look stable — harvest is likely close to the expected figure.',
+        Medium: '⚠️ Some variability expected — plan for a range between worst and best case.',
+        High:   '❗ High variability — consider extra precautions like irrigation or pest management.'
+      };
+      hint.textContent = msgs[risk];
+    }
+  }
 });
 </script>
 {% endblock %}
